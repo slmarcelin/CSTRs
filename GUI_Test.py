@@ -1,4 +1,4 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import StringVar, IntVar, BooleanVar
 import random
 import Ard_CMDS as ard
@@ -103,7 +103,7 @@ def SecLoop():
     #Update PV,OP und Stirring motor status
     PV_temp = ard.GetTemperatures(A)
     if ard.run: #Arduino is connected
-        PV=PV_temp
+    
         for i in range(0,6)
             Reactor[i].PV= PV_temp[i]
             Reactor[i].OP= PIDfunct( Reactor[i].SP,  Reactor[i].PV)
@@ -116,7 +116,7 @@ def SecLoop():
 
     ard.UpdateOutputs(A) #THIS IS TEMPORARY, MAKES LED BLINK
     LoopTimer=Timer(0.5, SecLoop)
-    #LoopTimer.start()
+    LoopTimer.start()
 
 def PIDfunct(sp,pv):
     op=[]
@@ -126,8 +126,7 @@ def PIDfunct(sp,pv):
     d=1
 
     for i in range(0,6):
-        op.append(  ((sp[i]-pv[i])*K)      )
-
+        Reactor[i].OP=  ((Reactor[i].SP Reactor[i].PV)*K)  
     return op
 
 
@@ -327,11 +326,10 @@ root.mainloop()
 UpdateLabelsTimer.cancel()
 
 
-
-
-
-
 sys.exit()
+
+
+
 
 
 
