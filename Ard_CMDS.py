@@ -48,15 +48,15 @@ def UpdateOutputs(ard):
 def GetTemperatures(ard):
     try:
         Sensor = []
-        for i in range(0,6):
-            Sensor[i]= ard.analogRead(15)
+        
+        Sensor.append( ard.analogRead(15) )
+        Sensor.append(Sensor[0] )
+        Sensor.append(Sensor[0] )
+        Sensor.append(Sensor[0] )
+        Sensor.append(Sensor[0] )
+        Sensor.append(Sensor[0] )
+        
 
-        #Sensor.append( ard.analogRead(15) )
-        #Sensor.append( randrange(34,38))
-        #Sensor.append( randrange(34,38))
-        #Sensor.append( randrange(34,38))
-        #Sensor.append( randrange(34,38))
-        #Sensor.append( randrange(34,38))
         run=True
         return Sensor
     except:

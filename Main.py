@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import StringVar, IntVar, BooleanVar
-import random
+#import random
 import Ard_CMDS as ard
 import datetime
 import time
