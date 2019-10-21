@@ -2,19 +2,17 @@
 import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
-
 import CSV_funct as save
 import ARD_funct as ard
-
 from threading import Timer
 from functools import partial
-
 from time import strftime, gmtime
 import random
 import datetime
 import time
-
 import sys
+from pathlib import Path
+ 
 
 
 #### VARIABLES
@@ -32,7 +30,8 @@ class Reactor(object):
         self.ActiveTime = time.time()  # Time when status changed
         self.StirrStatus = StirrStatus  
 
-save.config_read('SETUP_.csv') # GET VALUES FROM CSV
+dir= '{}{}'.format(Path(__file__).parent.absolute(),'\SETUP_.csv')
+save.config_read(dir) # GET VALUES FROM CSV
 Reactor = [Reactor(Name="Reactor 1", SP=save.SP[0], TimeOn=save.TimeOn[0], TimeOff=save.TimeOff[0], StirrStatus=0),
            Reactor(Name="Reactor 2", SP=save.SP[1], TimeOn=save.TimeOn[1], TimeOff=save.TimeOff[1], StirrStatus=0),
            Reactor(Name="Reactor 3", SP=save.SP[2], TimeOn=save.TimeOn[2], TimeOff=save.TimeOff[2], StirrStatus=0),
@@ -53,16 +52,11 @@ coms.append('/dev/ttyACM3')
 coms.append('/dev/ttyUSB0')
 coms.append('/dev/ttyUSB1')
 
-
 rng = range(0,6)
 run=0
 ######################################
 
 
-
-# This Function Changes the status of
-# the stirring mechanism, according to
-# the ON and OFF duration
 def ToggleStirr():
 
     for i in rng:
@@ -93,7 +87,7 @@ def UpdateVarText():
 
     TextVar.StirrStatus.set( BoolToText( Reactor[i].StirrStatus,"ON", "OFF") )
     TextVar.CurrTime.set( strftime("%H:%M:%S", gmtime(time.time()-  Reactor[i].ActiveTime)) )
-    TextVar.InfoBar.set( BoolToText( ard.run,"ARDUINO IS CONNECTED", "NO ARDUINO DETECTED") )
+    TextVar.InfoBar.set( BoolToText( ard.run,"ARDUINO IS CONNECTED", "NO CONNECTION") )
    
     #Color of ON/OFF stirring status
     if Reactor[selReact].StirrStatus:
@@ -105,7 +99,6 @@ def UpdateVarText():
         EnButton.configure(bg =Enabled_col)
     else:
         EnButton.configure(bg =Disabled_col)
-
 def SecLoop():
     global A, LoopTimer
 
@@ -163,7 +156,6 @@ def _ChangeReactor(r=0):
     
     UpdateVarTextTimer.cancel()
     UpdateVarText()  
-
 def _changeCom():
     global com
     com = TextVar.COM.get()
@@ -178,6 +170,7 @@ def _EnClick():
    
     UpdateVarTextTimer.cancel()
     UpdateVarText()
+
 
 
 ###### INIT CODE ########
@@ -215,9 +208,6 @@ root.geometry("{}x{}".format(w, h))
 root.configure(bg='black')
 root.resizable(1,1)
 
-#Reactor frame
-Space = tk.Canvas(root, bg="Blue",height='{}m'.format(int(HEIGHT*z)),width='{:0.0f}m'.format(WIDTH*z) )
-Space.pack()
 
 class VarLabel(object):  #Variable text class
     def __init__(self):
@@ -234,20 +224,12 @@ class VarLabel(object):  #Variable text class
         self.InfoBar = StringVar()
         self.COM =StringVar()
 
-
-    def Change(self, Name=1, SP=1, PV=1, OP=1, TimeOn=1, TimeOff=1, StirrStatus=1, CurrTime=1, InfoBar=False, COM="COM10"):
-        self.Name.set(Name)
-        self.SP.set(SP)
-        self.PV.set(PV)
-        self.OP.set(OP)
-
-        self.TimeOn.set( TimeOn)
-        self.TimeOff.set(TimeOff)
-        self.StirrStatus.set(StirrStatus)
-        self.CurrTime.set(CurrTime)
-        self.InfoBar.set(InfoBar)
-        self.COM.set(COM)
 TextVar =  VarLabel() #Variable text object
+
+
+# Space where the Reactor frame is
+Space = tk.Canvas(root, bg="Blue",height='{}m'.format(int(HEIGHT*z)),width='{:0.0f}m'.format(WIDTH*z) )
+Space.pack()
 
 
 ## Row of buttons
@@ -261,7 +243,6 @@ SelButton[selReact].configure(bg=Selected_col)
 ## Reactor Frame
 Loopframe= tk.Frame(Space, bg='black', bd=2)
 Loopframe.place(relx= 0, rely=0.15 ,relwidth=1 , relheight= 1- 0.05- (1/6))
-
 # Reactor Label
 NameLabel=tk.Label(Loopframe, textvariable=TextVar.Name ,width=10, font=("Calibri", int(10*zl)), anchor= 'w')
 NameLabel.place(relx=0.0, rely=0.0, relwidth=1, relheight=0.1)
@@ -270,55 +251,46 @@ EnButton= tk.Button(Loopframe, textvariable=TextVar.Enable, bd=1,bg='light blue'
 EnButton.place(relx=0.8, rely=0.0, relwidth=0.2, relheight=0.1)
 
 
-# Temperature FRAME
+## Temperature FRAME
 TemperatureFrame=tk.Frame(Loopframe, bg= 'lightsteelblue')
 TemperatureFrame.place(relx=0, rely=0.11 , relwidth=0.599, relheight=1-0.15-0.01)
-
 # Temperature label
 TemperatureLabel=tk.Label(TemperatureFrame, text="Temperature", bg='DarkBlue', fg="white", font=("Calibri", int(11*zl),'bold'), anchor="w")
 TemperatureLabel.place(relx=0, rely=0, relwidth=1, relheight=0.14)
-
-#  SP Label
+# SP Label
 SpLabel= tk.Label(TemperatureFrame, text="SP", fg="black",bg='lightsteelblue',  font=("Calibri", int(10*zl), "bold"), anchor="w")
 SpLabel.place(relx=0, rely=0.15, relwidth=0.15, relheight=0.15)
 SpValue=tk.Spinbox(TemperatureFrame, from_=25, to=50, textvariable=TextVar.SP, fg="green", command= _spinSP, font=("Calibri", int(25*zl)), relief="solid")
 SpValue.place(relx=0.02, rely=0.35, relwidth=0.3, relheight=0.4)
-
 # Pv
 PvLabel=tk.Label(TemperatureFrame, text='PV',  fg="black",bg='lightsteelblue',  font=("Calibri", int(10*zl), "bold"), anchor="w")
 PvLabel.place(relx=0.5, rely=0.15, relwidth=0.15, relheight=0.15)
 PvValue=tk.Label(TemperatureFrame, textvariable=TextVar.PV,bg='lightsteelblue', fg='DarkBlue' ,  font=("Calibri", int(30*zl), "bold"), anchor="w")
 PvValue.place(relx=0.5, rely=0.3, relwidth=0.6, relheight=0.25)
-
-# Heating Status
+# OP Status
 OpLabel=tk.Label(TemperatureFrame, textvariable= TextVar.OP,   fg="red", font=("Calibri", int(10*zl)))
 OpLabel.place(relx=0.4, rely=0.6, relwidth=0.55, relheight=0.2)
 
 
-# Stirring FRAME
+## Stirring FRAME
 StirringFrame=tk.Frame(Loopframe, bg= 'azure')
 StirringFrame.place(relx=0.6,rely=0.11, relwidth=0.4, relheight=1-0.16)
-
 # Stirring Label
 StirringeLabel=tk.Label(StirringFrame, text="Stirring", bg='teal', fg="white", font=("Calibri", int(11*zl),'bold'), anchor="w")
 StirringeLabel.place(relx=0, rely=0, relwidth=1, relheight=0.14)
-
 # Duration label
 DurationLabel=tk.Label(StirringFrame, text="Duration", fg="black",bg='azure',  font=("Calibri", int(10*zl), "bold"), anchor="w")
 DurationLabel.place(relx=0, rely=0.15, relwidth=0.5, relheight=0.15)
-
 # On time label
 OnLabel=tk.Label(StirringFrame, text="ON" , fg="black" , bg='azure',  font=("Calibri", int(9*zl), "bold"), anchor="w")
 OnLabel.place(relx=0.0, rely=0.3, relwidth=0.2, relheight=0.15)
 OnValue=tk.Spinbox(StirringFrame, from_=1, to=60, textvariable=TextVar.TimeOn, fg="black", command= _spinOnt, font=("Calibri", int(15*zl)), relief="solid")
 OnValue.place(relx=0.15, rely=0.3, relwidth=0.28, relheight=0.2)
-
 # Off time label
 OffLabel=tk.Label(StirringFrame, text="OFF", bg= 'azure' ,  font=("Calibri", int(9*zl), "bold"), anchor="w")
 OffLabel.place(relx=0.4 +0.15, rely=0.3, relwidth=0.2, relheight=0.15)
 OffValue=tk.Spinbox(StirringFrame, textvariable= TextVar.TimeOff, values=(1, 5, 10, 15, 30, 60),command=_spinOfft, bg= 'white', fg="black",  font=("Calibri", int(13*zl)), relief="solid")
 OffValue.place(relx=0.4+ 0.3, rely=0.3, relwidth=0.28, relheight=0.2)
-
 # Stirring Status
 StirrStatLabel=tk.Label(StirringFrame, textvariable=TextVar.StirrStatus, bg= 'LightGreen', font=("Calibri", int(15*zl), "bold"))
 StirrStatLabel.place(relx=0.25, rely=0.6, relwidth=0.55, relheight=0.2)
@@ -327,13 +299,10 @@ TimeLeft=tk.Label(StirringFrame, textvariable=TextVar.CurrTime, bg= 'azure', fon
 TimeLeft.place(relx=0.55, rely=0.8, relwidth=0.45, relheight=0.15)
 
 
-## Status INFO
+## Status Bar
 InfoBarLabel=tk.Label(Space, textvariable=TextVar.InfoBar ,bg= 'DarkGray' , font=('Calibri ',int(8*zl)), anchor='e'  )
 InfoBarLabel.place(relx=0.1, rely=1-0.07, relwidth=1- 0.1, relheight=0.07)
 #SERIAL PORT
-#ComControl = tk.Entry(Space, textvariable=TextVar.COM, bg= 'white', validate="focusout", validatecommand= _changeCom) 
-#ComControl.insert(0, com)
-
 ComControl = tk.Spinbox(Space,textvariable=TextVar.COM, values=coms, bg= 'white', font=('Calibri ',int(5*zl)), command= _changeCom)
 ComControl.place(relx=0.0, rely=1-0.07, relwidth=0.2, relheight=0.07)
 
@@ -342,19 +311,17 @@ UpdateVarText()
 root.mainloop()
 
 
-
-
-## CODE TO EXIT THE PROGRAM
+#### CODE TO FINISH THE PROGRAM ####
 
 #End timmers
 LoopTimer.cancel()
 UpdateVarTextTimer.cancel()
+
 #Save changes in Setup csv file
 for i in rng:
     save.SP[i] = Reactor[i].SP
     save.TimeOn[i] = Reactor[i].TimeOn
     save.TimeOff[i] = Reactor[i].TimeOff
-save.config_save(f='SETUP_.csv', SP=save.SP, TimeOn=save.TimeOn ,TimeOff=save.TimeOff, COM=com)
-
+save.config_save(f=dir, SP=save.SP, TimeOn=save.TimeOn ,TimeOff=save.TimeOff, COM=com)
 
 sys.exit()

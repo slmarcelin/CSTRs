@@ -3,20 +3,16 @@ import time
 from random import randrange
 
 
-global run
 run =False
 
-#### Pins
-sensorPin = 14                     # Pot on A0 - Analog input
+
+#### Pins #######
+sensorPin = 14      # Pot on A0 - Analog input
 led=13
-##########
+#################
 
 
-
-# change this to the number of steps on your motor
-STEPS = 100
-
-
+## CONNECT FUNCTION ##
 def ArdConnect(com):
     try:
         #print('Connecting...')
@@ -29,6 +25,8 @@ def ArdConnect(com):
         run=False
         print("Connection Failed!")
         return 'EMPTY'
+
+## SETUP Arduino FUNCTION ##
 def ArdSetup(ard):
     global run
     try:
@@ -39,6 +37,8 @@ def ArdSetup(ard):
     except:
         run=False
         #print("Connection Failed!")
+
+## 
 def UpdateOutputs(ard):
     global run
     try:
@@ -51,6 +51,8 @@ def UpdateOutputs(ard):
     except:
         run=False
         #print("Connection Failed!")
+
+## Get Temperature readings
 def GetTemperatures(ard):
     try:
         Sensor = []
