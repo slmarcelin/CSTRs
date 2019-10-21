@@ -50,9 +50,15 @@ def LOG(r=0,header="Var1,Var2"+"\n"):
     file.close()
     #time.sleep(.1)
 
+
+
+
+
+
+
 i=0
 header=("Time,Temperature\n")
-while True:
+while False:
     i=i+1
     LOG(r=0,header=header)
     LOG(r=1,header=header)
