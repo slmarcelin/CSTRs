@@ -31,6 +31,10 @@ class Reactor(object):
         self.ActiveTime = time.time()  # Time when status changed
         self.StirrStatus = StirrStatus  
 
+
+
+
+
 dir= '{}{}'.format(Path(__file__).parent.absolute(),'\SETUP_.csv')
 save.config_read(dir) # GET VALUES FROM CSV
 Reactor = [Reactor(Name="Reactor 1", SP=save.SP[0], TimeOn=save.TimeOn[0], TimeOff=save.TimeOff[0], StirrStatus=0, HeaterTemp=0),
@@ -40,6 +44,7 @@ Reactor = [Reactor(Name="Reactor 1", SP=save.SP[0], TimeOn=save.TimeOn[0], TimeO
            Reactor(Name="Reactor 5", SP=save.SP[4], TimeOn=save.TimeOn[4], TimeOff=save.TimeOff[4], StirrStatus=1, HeaterTemp=0),
            Reactor(Name="Reactor 6", SP=save.SP[5], TimeOn=save.TimeOn[5], TimeOff=save.TimeOff[5], StirrStatus=1, HeaterTemp=0)]
 
+Reactor[0].Name
 
 #### Arduino Serial port
 com = save.COM # Port on which Arduino is connected
