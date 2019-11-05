@@ -4,8 +4,8 @@ global SP, TimeOn, TimeOff,COM
 
 def config_save(f='',SP=[0]*6,TimeOn=[0]*6,TimeOff=[0]*6,COM='COM13'):
     with open(f, mode='w',newline='') as File:
+        
         writer = csv.writer(File)
-
         writer.writerow(SP)# SP
         writer.writerow(TimeOn)# Ton
         writer.writerow(TimeOff)# Ton
@@ -28,13 +28,10 @@ def config_read(file=''):
 
 
 
-
 import os
 import time 
 from time import sleep
 from datetime import datetime
-
-
 
 
 def LOG(r=0,header="Var1,Var2"+"\n"):
@@ -53,15 +50,14 @@ def LOG(r=0,header="Var1,Var2"+"\n"):
 
 
 
-
-
-
-i=0
-header=("Time,Temperature\n")
-while False:
-    i=i+1
-    LOG(r=0,header=header)
-    LOG(r=1,header=header)
-    LOG(r=2,header=header)
-    LOG(r=3,header=header)
-    print(i)
+debug=False
+if debug:
+    i=0
+    header=("Time,Temperature\n")
+    while False:
+        i=i+1
+        LOG(r=0,header=header)
+        LOG(r=1,header=header)
+        LOG(r=2,header=header)
+        LOG(r=3,header=header)
+        print(i)
