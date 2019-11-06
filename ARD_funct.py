@@ -41,6 +41,8 @@ def ArdSetup(ard):
         #print("Setup Failed!")
 
 
+
+
 ## 
 def MoveStirrMotors(ard,rpm=10,en=True):
     global run
@@ -61,8 +63,7 @@ def MoveStirrMotors(ard,rpm=10,en=True):
     except:
         run=False
         #print("Stirring motors Failed!")
-
-## 
+## SET OUTPUTS for Heater
 def Heat(ard,op=0,en=True):
     global run
     try:
@@ -84,6 +85,9 @@ def Heat(ard,op=0,en=True):
         #print("Heating Failed!")
 
 
+
+
+
 ## Get Temperature readings from the Reactor
 def ReadReactorTemp(ard):
     try:
@@ -95,8 +99,6 @@ def ReadReactorTemp(ard):
         run=False
         return -1
         #print("Temp reading Failed!")
-
-
 ## Get Temperature readings from the Heather
 def ReadHeatherTemp(ard):
     try:

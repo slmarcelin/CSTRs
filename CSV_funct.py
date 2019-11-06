@@ -34,18 +34,29 @@ from time import sleep
 from datetime import datetime
 
 
-def LOG(r=0,header="Var1,Var2"+"\n"):
+def LOG(File,header,Date,v1='',v2='',v3='',v4=''):
+    #"LOG_.csv"
+    file = open(File, "a")
 
-    file = open("LOG_.csv", "a")
 
-    if os.stat("LOG_.csv").st_size == 0:
-        file.write(header)
+    if os.stat(File).st_size == 0:
+        file.write(header+'\n')
 
-    now = datetime.now()
-    file.write(str(now)+","+str(r)+","+str(-r)+","+str(r-10)+","+str(r+5)+","+str(r*r)+"\n")
+    file.write(str(Date))
+    file.write("," + str(v1))
+    if v2 != '': file.write("," + str(v2))
+    if v3 != '': file.write("," + str(v3))
+    if v4 != '': file.write("," + str(v4))
+    file.write('\n')
+   
+
+
+
+
+
     file.flush()
     file.close()
-    #time.sleep(.1)
+
 
 
 
