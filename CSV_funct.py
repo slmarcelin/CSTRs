@@ -88,8 +88,6 @@ def setup_get(file=''):
         StirringInfoName = list(data[7] )
         FeedingMaterialName = list(data[8] )
 
-# Get last configuration status
-setup_get(SetupFile) 
 
 
 
@@ -152,7 +150,10 @@ if not os.path.exists(CsvFolder):
     setup_CSVnames(f = SetupFile,trn= TempReactorName, thn= TempHeaterName, sin= StirringInfoName, fmn= FeedingMaterialName)
 
 
+# Get last configuration status
+setup_get(SetupFile) 
 
+#####################################################################
 
 
 

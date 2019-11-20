@@ -17,15 +17,15 @@ led=13
 def ArdConnect(com):
     global run
     try:
-        print('connecting')
+  
         connection = SerialManager(device=com)
         ard = ArduinoApi(connection=connection)
-        print("**Device connected")
+        print("[Arduino connected]")
         run = True
         return ard
     except:
         run=False
-        print("**Connection Failed!")
+        print('[Connection Failed]')
         return 'EMPTY'
 
 # ArdConnect('COM15')
@@ -37,11 +37,11 @@ def ArdSetup(ard):
         ard.pinMode(HeatherTempSensor, ard.INPUT)
         ard.pinMode(ReactorTempSensor, ard.INPUT)
         ard.pinMode(led, ard.OUTPUT)
-        print('**Arduino set')
+        print('[Arduino setup...OK]')
         run = True
     except:
         run=False
-        print("Setup Failed!")
+        print("[Arduino setup...Failed]")
 
 
 ## 
@@ -62,7 +62,7 @@ def ControlStirringMotors(ard,rpm=10,en=True):
         run = True
     except:
         run=False
-        print("Stirring motors Failed!")
+        print('[Stirring motors Failed]')
 
 
 ## SET OUTPUTS for Heater
@@ -79,7 +79,7 @@ def ControlHeaters(ard,op=0.1,en=True):
         run = True
     except:
         run=False
-        print("Heating Failed!")
+        print('[Heating Failed]')
 
 
 
@@ -93,7 +93,7 @@ def ReadReactorTemp(ard):
         return Sensor
     except:
         run=False
-        print("Temp reading Failed!")
+        print(['Temperature reading Failed]')
 
 ## Get Temperature readings from the Heather
 def ReadHeatherTemp(ard):
