@@ -1,6 +1,7 @@
 from nanpy import (ArduinoApi, SerialManager, Stepper)
 import time
 from random import randrange
+import math
 
 run =False
 
@@ -15,37 +16,37 @@ led=13
 ## CONNECT FUNCTION ##
 def ArdConnect(com):
     global run
-    run = True
     try:
-        #print('Connecting...')
+        print('connecting')
         connection = SerialManager(device=com)
         ard = ArduinoApi(connection=connection)
-        print("Device connected")
+        print("**Device connected")
+        run = True
         return ard
     except:
         run=False
-        print("Connection Failed!")
+        print("**Connection Failed!")
         return 'EMPTY'
+
+# ArdConnect('COM15')
 
 ## SETUP Arduino FUNCTION ##
 def ArdSetup(ard):
     global run
-    run = True
     try:
         ard.pinMode(HeatherTempSensor, ard.INPUT)
         ard.pinMode(ReactorTempSensor, ard.INPUT)
         ard.pinMode(led, ard.OUTPUT)
-        print('Arduino set')
+        print('**Arduino set')
+        run = True
     except:
         run=False
         print("Setup Failed!")
 
 
-
 ## 
 def ControlStirringMotors(ard,rpm=10,en=True):
     global run
-    run = True
     try:
         ard.digitalWrite(led, ard.HIGH)
         time.sleep(rpm)
@@ -58,6 +59,7 @@ def ControlStirringMotors(ard,rpm=10,en=True):
         ard.digitalWrite(led, ard.HIGH)
         time.sleep(rpm)
         ard.digitalWrite(led, ard.LOW)
+        run = True
     except:
         run=False
         print("Stirring motors Failed!")
@@ -66,7 +68,6 @@ def ControlStirringMotors(ard,rpm=10,en=True):
 ## SET OUTPUTS for Heater
 def ControlHeaters(ard,op=0.1,en=True):
     global run
-    run = True
     try:
         ard.digitalWrite(led, ard.HIGH)
         time.sleep(op)
@@ -75,21 +76,20 @@ def ControlHeaters(ard,op=0.1,en=True):
         ard.digitalWrite(led, ard.HIGH)
         time.sleep(op)
         ard.digitalWrite(led, ard.LOW)
+        run = True
     except:
         run=False
         print("Heating Failed!")
 
 
 
-
-
 ## Get Temperature readings from the Reactor
 def ReadReactorTemp(ard):
     global run
-    run = True
     try:
-        s= ard.analogRead(ReactorTempSensor) 
+        s =  ReadToCelcious( ard.analogRead(ReactorTempSensor) )
         Sensor = [s]*6
+        run = True
         return Sensor
     except:
         run=False
@@ -98,18 +98,38 @@ def ReadReactorTemp(ard):
 ## Get Temperature readings from the Heather
 def ReadHeatherTemp(ard):
     global run
-    run = True
     try:
-        s= ard.analogRead(HeatherTempSensor) 
+        s = ReadToCelcious( ard.analogRead(HeatherTempSensor) )
         Sensor = [s]*6
+        run = True
         return Sensor
     except:
         run=False
-        print("Temp reading Failed!")
-
-##def VoltsToCelc():
 
 
+## https://learn.adafruit.com/thermistor/using-a-thermistor
+def ReadToCelcious(read):
+    # resistance at 25 degrees C
+    THERMISTORNOMINAL = 10000      
+    # temp. for nominal resistance (almost always 25 C)
+    TEMPERATURENOMINAL = 25   
+    # how many samples to take and average, more takes longer
+    # but is more 'smooth'
+    NUMSAMPLES = 5
+    # The beta coefficient of the thermistor (usually 3000-4000)
+    BCOEFFICIENT = 3950
+    # the value of the 'other' resistor
+    SERIESRESISTOR = 10000
 
+    # convert the value to resistance
+    R = 1023 / (read - 1)
+    R = SERIESRESISTOR / R
 
+    steinhart = R / THERMISTORNOMINAL             # (R/Ro)
+    steinhart = math.log(steinhart)                    # ln(R/Ro)
+    steinhart = steinhart/BCOEFFICIENT                           # 1/B * ln(R/Ro)
+    steinhart = steinhart+ 1.0 / (TEMPERATURENOMINAL + 273.15)    # + (1/To)
+    steinhart = 1.0 / steinhart                         # Invert
+    steinhart = steinhart - 273.15 
 
+    return round(steinhart,1)
