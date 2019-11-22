@@ -1,11 +1,7 @@
-import tkinter as tk
+
 from pandas import DataFrame
-import matplotlib.pyplot as plt
 
 import pandas as pd
-import seaborn as sns
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 
 
 

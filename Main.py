@@ -1,31 +1,19 @@
 #!/usr/bin/python3
-
-
 import CSV_funct as CSV
 import ARD_funct as ard
 import Panda_funct as Panda
-#from tkinter.ttk import *
+
 import tkinter as tk
 from tkinter import *
 from threading import Timer
 from functools import partial
 from time import *
-#import random
 from datetime import *
-
-#from datetime import date
 import time
 import sys
-import pandas as pd   #install pip install pandas
-# 
-import matplotlib.dates as mdates  #For date formatting purposes
-
-#from pandas import DataFrame
-#import pandas as pd
-#import seaborn as sns
-#from random import randint
+import pandas as pd  
+import matplotlib.dates as mdates 
 import os
-# these four imports are important
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -73,6 +61,7 @@ com_arr.append('COM13')
 com_arr.append('COM14')
 com_arr.append('COM15')
 # for Raspberry PI
+com_arr.append('/dev/ttyS0')
 com_arr.append('/dev/ttyACM1')
 com_arr.append('/dev/ttyACM2')
 com_arr.append('/dev/ttyACM3')
@@ -103,25 +92,27 @@ def UpdateVarText():
 	UpdateVarTextTimer=Timer(1,UpdateVarText)
 	UpdateVarTextTimer.start()
 
-	date = strftime('%A, %B %eth %Y\nTime: %H:%M:%S', gmtime(time.time() ))
+	date = strftime('%B %eth %Y\nTime: %H:%M:%S', gmtime(time.time() ))
 	GUI_Clock.configure(text=date)
 
 	i = selReact
-	TextVar.Name.set( Reactor[i].Name )
-	TextVar.Enable.set( BoolToText(Reactor[selReact].Enable,'Enabled','Disabled'))
-	TextVar.SP.set( Reactor[i].SP)
-	TextVar.PV.set( '{} {}'.format(Reactor[i].PV, '°C') )
-	TextVar.OP.set( 'Heating {} %'.format(Reactor[i].OP) )
-	TextVar.HeaterTemp.set( 'Temp: {} °C'.format(Reactor[i].HeaterTemp) )
+	GUI_ReactorName.configure(text =Reactor[i].Name  )
+	#GUI_ReactorEnable.configure(text= boolToText(Reactor[selReact].Enable,'Enabled','Disabled') )
+	
+	GUI_SpValue.configure(text=  Reactor[i].SP ) 
+	GUI_PvValue.configure(text= '{} {}'.format(Reactor[i].PV, '°C') )
+	GUI_OpLabel.configure(text= 'Heating {} %'.format(Reactor[i].OP) )
+	GUI_HeaterTemp.configure(text= 'Temp: {} °C'.format(Reactor[i].HeaterTemp) )
+	GUI_OnValue.configure(text= Reactor[i].TimeOn)
+	GUI_OffValue.configure(text= Reactor[i].TimeOff)
+	GUI_RpmValue.configure(text= Reactor[i].RPM)
 
-	TextVar.TimeOn.set( Reactor[i].TimeOn)
-	TextVar.TimeOff.set( Reactor[i].TimeOff)
-	TextVar.RPM.set( Reactor[i].RPM)
+	GUI_StirrStatus.configure(text= BoolToText( Reactor[i].StirrStatus,"ON", "OFF") )
+	GUI_StirrTime.configure(text= strftime("%H:%M:%S", gmtime(time.time()-  Reactor[i].ActiveTime)) )
 
-	TextVar.StirrStatus.set( BoolToText( Reactor[i].StirrStatus,"ON", "OFF") )
-	TextVar.CurrTime.set( strftime("%H:%M:%S", gmtime(time.time()-  Reactor[i].ActiveTime)) )
-	TextVar.InfoBar.set( BoolToText( ard.run,"ARDUINO IS CONNECTED", "ARDUINO IS NOT DETECTED") )
+	GUI_StatusInfo.configure(text= BoolToText( ard.run,"ARDUINO IS CONNECTED", "ARDUINO IS NOT DETECTED") )
    
+
 	#Color of ON/OFF stirring status
 	if Reactor[selReact].StirrStatus:
 		GUI_StirrStatus.configure(bg =RGB_Stirring_ON)
@@ -171,13 +162,13 @@ def SecondLoop():
 ## This function is been called every minute
 def MinuteLoop():
 
-	if ard.run and Reactor[0] != 0:
+	if ard.run and Reactor[0] != 0 or True:
 		date=datetime.strftime(datetime.now(),'%Y-%m-%d')
 
 		for i in rng:   
 			
 			### LOG REACTOR TEMPERATURE
-			path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.TempReactorName[i])
+			path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.TempReactorName[i])
 			#Check if CSV file is older than 30 days or bigger than 10MB
 			check = fileCheck(CSV.TempReactorName[i], path,i)
 			if check:
@@ -186,14 +177,14 @@ def MinuteLoop():
 
 				CSV.TempReactorName[i] = '{}-CSTR-{}-1.csv'.format(date ,i+1)
 				CSV.setup_CSVnames(f = CSV.SetupFile,trn= CSV.TempReactorName, thn= CSV.TempHeaterName, sin= CSV.StirringInfoName, fmn= CSV.FeedingMaterialName)
-				path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.TempReactorName[i])
+				path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.TempReactorName[i])
 			CSV.LOG(f = path , header = 'Date,RPM,ON,OFF', v1= Reactor[i].PV )
 			#####################################################################################
 
 
 
 			### LOG HEATER TEMPERATURE
-			path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.TempHeaterName[i])
+			path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.TempHeaterName[i])
 			#Check if CSV file is older than 30 days or bigger than 10MB
 			check = fileCheck(CSV.TempHeaterName[i], path,i)
 			if check:
@@ -202,14 +193,14 @@ def MinuteLoop():
 				
 				CSV.TempReactorName[i] = '{}-CSTR-{}-2.csv'.format(date ,i+1)
 				CSV.setup_CSVnames(f = CSV.SetupFile,trn= CSV.TempReactorName, thn= CSV.TempHeaterName, sin= CSV.StirringInfoName, fmn= CSV.FeedingMaterialName)
-				path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.TempHeaterName[i])
+				path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.TempHeaterName[i])
 			CSV.LOG(f = path , header = 'Date,Heater Temperature',v1= Reactor[i].HeaterTemp)
 			#####################################################################################
 			
 
 
 			### LOG Stirring info
-			path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.StirringInfoName[i])
+			path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.StirringInfoName[i])
 			#Check if CSV file is older than 30 days or bigger than 10MB
 			check = fileCheck(CSV.StirringInfoName[i], path,i)
 			if check:
@@ -218,7 +209,7 @@ def MinuteLoop():
 				
 				CSV.StirringInfoName[i] = '{}-CSTR-{}-3.csv'.format(date ,i+1)
 				CSV.setup_CSVnames(f = CSV.SetupFile,trn= CSV.TempReactorName, thn= CSV.TempHeaterName, sin= CSV.StirringInfoName, fmn= CSV.FeedingMaterialName)
-				path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, i+1, CSV.StirringInfoName[i])
+				path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i+1, CSV.StirringInfoName[i])
 			CSV.LOG(f = path , header = 'Date,RPM,ON,OFF',v1= Reactor[i].RPM,v2=Reactor[i].TimeOn,v3=Reactor[i].TimeOff)
 			#####################################################################################
 
@@ -279,7 +270,9 @@ def _spinRPM():
 	print('RPM changed')
 def _SerialPortChange():
 	global com
-	com = TextVar.COM.get()
+	com = GUI_SerialPortValue.get()
+
+
 	print("COM CHANGED")
 
 	return True
@@ -297,7 +290,7 @@ def _FeedMaterial():
 
 
 	### LOG Feed Material
-	path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, selReact+1, CSV.FeedingMaterialName[selReact])
+	path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, selReact+1, CSV.FeedingMaterialName[selReact])
 	#Check if CSV file is older than 30 days or bigger than 10MB
 	check = fileCheck(CSV.FeedingMaterialName[selReact], path,selReact)
 	if check:
@@ -306,15 +299,17 @@ def _FeedMaterial():
 		
 		CSV.FeedingMaterialName[selReact] = '{}-CSTR-{}-4.csv'.format(date ,selReact+1)
 		CSV.setup_CSVnames(f = CSV.SetupFile,trn= CSV.TempReactorName, thn= CSV.TempHeaterName, sin= CSV.StirringInfoName, fmn= CSV.FeedingMaterialName)
-		path = '{}\Reactor_{}\{}'.format(CSV.CsvFolder, selReact+1, CSV.StirringInfoName[selReact])
+		path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, selReact+1, CSV.StirringInfoName[selReact])
 	CSV.LOG(f = path , header = 'Date,Qty,Unit,Material',v1= GUI_FeedAmount.get(),v2=GUI_FeedUnit.get(),v3=GUI_FeedMaterial.get() )
 	
 
 
 	#Clear feed material objects
-	TextVar.FeedAmount.set('')
-	TextVar.FeedMaterial.set('')
-	TextVar.FeedUnit.set('')
+	GUI_FeedAmount.configure(text= '')
+	GUI_FeedUnit.configure(text='')
+	GUI_FeedMaterial.configure(text='')
+
+
 	print('Material fed')
 def _PIDConfig():
 	print('PID CONFIG')
@@ -342,8 +337,8 @@ def UpdatePlot(days,ax):
 	if days!=0: 
 		selRange = days
 
-	RTPath  = '{}\{}'.format(CSV.ReactorFolder[selReact],CSV.TempReactorName[selReact]) # Reactor temperature CSV file
-	HTPath  = '{}\{}'.format(CSV.ReactorFolder[selReact],CSV.TempHeaterName[selReact]) # Heater temperature CSV file
+	RTPath  = '{}/{}'.format(CSV.ReactorFolder[selReact],CSV.TempReactorName[selReact]) # Reactor temperature CSV file
+	HTPath  = '{}/{}'.format(CSV.ReactorFolder[selReact],CSV.TempHeaterName[selReact]) # Heater temperature CSV file
 		
 	desiredRange= timedelta(hours= 24 * selRange) #obtain date for last 24 hrs
 	now = datetime.now() #get today's date
@@ -398,7 +393,7 @@ def UpdatePlot(days,ax):
 		ax.cla()
 		p1=ax.plot(ReactorTemperatureDF, marker='.', markersize=8, linestyle='-', color='DarkBlue')
 		p2=ax.plot(HeaterTemperatureDF, marker='.', markersize=8, linestyle='-', color='red') #plot the data
-		ax.legend((p1[0], p2[0]), ('Reactor', 'Heater'))
+		ax.legend((p1[0], p2[0]), ('Reactor', 'Heater') )
 		ax.grid()
 
 		ax.xaxis.set_major_locator(locator) #set the x axis locator
@@ -408,9 +403,9 @@ def UpdatePlot(days,ax):
 		ax.cla()
 		GraphTitle = "Not enough data to graph the "+ GraphTitle+" for Reactor "+str(selReact+1)+"\nTry again later or pick another option"
 
-	ax.set_title( GraphTitle, size = 16*zl)  #set the graph title
-	ax.set_xlabel(xlabel,size = 10*zl) #set the x axis label
-	ax.set_ylabel('°C Degrees',size = 10*zl) #set the y axis label
+	ax.set_title( GraphTitle, size = 12*zl)  #set the graph title
+	ax.set_xlabel(xlabel, size = 12*zl) #set the x axis label
+	ax.set_ylabel('°C Degrees',size = 12*zl) #set the y axis label
 	
 	
 	graph.draw()
@@ -459,6 +454,7 @@ RGB_Graph_b2=	'#{:02X}{:02X}{:02X}'.format(237,241,244)
 
 
 
+
 ## Main Window
 GUI_window = tk.Tk()
 
@@ -477,6 +473,16 @@ x = (sw/2) - (w/2)
 y = (sh/2) - (h/2)
 
 
+# Font config
+font_name = 'calibri'
+font_small = (font_name, int(10*zl) )   # Small
+font_small_bold = (font_name, int(10*zl),'bold' )   # Smallbold
+font_medium = (font_name, int(12*zl) )	#medium
+font_big = (font_name, int(32*zl) )	#big
+
+
+
+
 #GUI_window.geometry('{}x{}'.format(w,h) )
 GUI_window.geometry('%dx%d+%d+%d' % (w, h, x, 0))
 #GUI_window.state("zoomed")
@@ -486,32 +492,7 @@ GUI_window.resizable(1,1)
 
 GUI_FRAME = tk.Canvas(GUI_window,bg="white")
 GUI_FRAME.place(x=0,y=0 ,height= h, width= w)
-#This class contains all the variable texts used in the GUI objects
-class VarLabel(object):  #Variable text class
-	def __init__(self):
-		self.Name = StringVar()
-		self.Enable = StringVar()
-		#Temperature Frame
-		self.SP = StringVar()
-		self.PV = StringVar()
-		self.OP = StringVar()
-		self.HeaterTemp = StringVar()
-		#Stirring Frame
-		self.TimeOn = StringVar()
-		self.TimeOff = StringVar()
-		self.RPM = StringVar()
-		self.StirrStatus = StringVar()
-		self.CurrTime = StringVar()
-		#Feeding Frame
-		self.FeedAmount = StringVar()
-		self.FeedMaterial = StringVar()
-		self.FeedUnit = StringVar()
-		#Graph Frame
-		self.fromDate = StringVar()
-		#Bottom bar
-		self.InfoBar = StringVar()
-		self.COM =StringVar()
-TextVar =  VarLabel() #Variable text object
+
 
 
 ## LEFT BAR with the reactor buttons
@@ -521,13 +502,16 @@ GUI_LeftPanelLeftBar.place(relx=0.0, rely=0.0, relwidth=0.2, relheight=1)
 # Column of buttons
 GUI_ReactorButtons=[0]*6
 for i in rng:
-	GUI_ReactorButtons[i]= tk.Button(GUI_LeftPanelLeftBar, text= '{} {}'.format('Reactor ', i+1) , bg= RGB_LeftBar_LightBlue, font=("Calibri", int(11*zl))
-							,relief=FLAT,command= partial(_ChangeReactor,i)) 
+	GUI_ReactorButtons[i]= tk.Button(GUI_LeftPanelLeftBar, text= '{} {}'.format('Reactor ', i+1) , bg= RGB_LeftBar_LightBlue, font= font_medium
+							, relief=FLAT,command= partial(_ChangeReactor,i)) 
 	GUI_ReactorButtons[i].place(relx=0, rely= (i/14)+(3/14) , relwidth=1, relheight= (1/15) )
 GUI_ReactorButtons[selReact].configure(bg=RGB_LeftBar_MidBlue)
 #CLOCK
-GUI_Clock = Label(GUI_LeftPanelLeftBar, font=('times', int(9*zl), 'bold'), bg='blue', fg='white')
-GUI_Clock.place(relx= 0.01, rely= 0.03, relwidth= 1-0.02, relheight= 0.05)
+
+
+
+GUI_Clock = Label(GUI_LeftPanelLeftBar,font= font_small_bold, bg='blue', fg='white')
+GUI_Clock.place(relx= 0.01, rely= 0.03, relwidth= 1-0.02, relheight= 0.065)
 
 
 
@@ -536,10 +520,10 @@ GUI_Clock.place(relx= 0.01, rely= 0.03, relwidth= 1-0.02, relheight= 0.05)
 GUI_ReactorFrame= tk.Frame(GUI_FRAME, bg='black', bd=2)
 GUI_ReactorFrame.place(relx= 0.205, rely= 0.01, relwidth= 1-0.21, relheight= 0.45 )
 # Reactor Label
-GUI_ReactorName=tk.Label(GUI_ReactorFrame,bg='white', textvariable=TextVar.Name ,width=10, font=("Calibri", int(15*zl)), anchor= 'w')
+GUI_ReactorName=tk.Label(GUI_ReactorFrame,bg='white' ,width=10, font= font_medium, anchor= 'w')
 GUI_ReactorName.place(relx=0.0, rely=0.0, relwidth=1, relheight=0.1)
 # ENABLE/DISABLE Reactor
-GUI_ReactorEnable= tk.Button(GUI_ReactorFrame, textvariable=TextVar.Enable, bd=1,bg='light blue', command= _EnableClick, font=("Calibri", int(9*zl)), relief="solid")
+GUI_ReactorEnable= tk.Button(GUI_ReactorFrame, bd=1,bg='light blue', command= _EnableClick, font=(font_name, int(9*zl)), relief="solid")
 #GUI_ReactorEnable.place(relx=0.8, rely=0.0, relwidth=0.2, relheight=0.1)
 
 
@@ -548,26 +532,26 @@ GUI_ReactorEnable= tk.Button(GUI_ReactorFrame, textvariable=TextVar.Enable, bd=1
 GUI_TempFrame=tk.Frame(GUI_ReactorFrame, bg= RGB_Sections_bg)
 GUI_TempFrame.place(relx=0, rely=0.11 , relwidth=1/3, relheight= 0.86)
 # Temperature label
-GUI_TempLabel=tk.Label(GUI_TempFrame, text="Temperature", bg=RGB_Temperature_title, fg="white", font=("Calibri", int(11*zl),'bold'), anchor="w")
+GUI_TempLabel=tk.Label(GUI_TempFrame, text="Temperature", bg=RGB_Temperature_title, fg="white",font= font_medium, anchor="w")
 GUI_TempLabel.place(relx=0, rely=0, relwidth=1, relheight=0.14)
 # SP Label
-GUI_SpLabel= tk.Label(GUI_TempFrame, text="SP", fg="black",bg=RGB_Sections_bg,  font=("Calibri", int(10*zl), "bold"), anchor="w")
+GUI_SpLabel= tk.Label(GUI_TempFrame, text="SP", fg="black",bg=RGB_Sections_bg, font= font_small_bold, anchor="w")
 GUI_SpLabel.place(relx=0, rely=0.15, relwidth=0.15, relheight=0.15)
-GUI_SpValue=tk.Spinbox(GUI_TempFrame, from_=25, to=50, textvariable=TextVar.SP, fg="green", command= _spinSP, font=("Calibri", int(25*zl)), relief="solid")
+GUI_SpValue=tk.Spinbox(GUI_TempFrame, from_=25, to=50, fg="green", command= _spinSP, font= font_big, relief="solid")
 GUI_SpValue.place(relx=0.02, rely=0.3, relwidth=0.3, relheight=0.3)
 # Pv
-GUI_PvLabel=tk.Label(GUI_TempFrame, text='PV',  fg="black",bg=RGB_Sections_bg ,  font=("Calibri", int(10*zl), "bold"), anchor="w")
-GUI_PvLabel.place(relx=0.5, rely=0.15, relwidth=0.15, relheight=0.15)
-GUI_PvValue=tk.Label(GUI_TempFrame, textvariable=TextVar.PV,bg=RGB_Sections_bg, fg=RGB_Temperature_title ,  font=("Calibri", int(30*zl), "bold"), anchor="w")
-GUI_PvValue.place(relx=0.5, rely=0.3, relwidth=0.6, relheight=0.25)
+GUI_PvLabel=tk.Label(GUI_TempFrame, text='PV',  fg="black",bg=RGB_Sections_bg , font= font_small_bold, anchor="w")
+GUI_PvLabel.place(relx=0.45, rely=0.15, relwidth=0.15, relheight=0.15)
+GUI_PvValue=tk.Label(GUI_TempFrame, bg=RGB_Sections_bg, fg=RGB_Temperature_title , font= font_big, anchor="w")
+GUI_PvValue.place(relx=0.45, rely=0.3, relwidth=0.6, relheight=0.25)
 # OP Status
-GUI_OpLabel=tk.Label(GUI_TempFrame, textvariable= TextVar.OP, bg='white', fg="red", font=("Calibri", int(10*zl)))
+GUI_OpLabel=tk.Label(GUI_TempFrame, bg='white', fg="red", font= font_small)
 GUI_OpLabel.place(relx=0.45, rely=0.6, relwidth=0.5, relheight=0.15)
 # Heater temperature sensor
-GUI_HeaterTemp=tk.Label(GUI_TempFrame, textvariable= TextVar.HeaterTemp, bg=RGB_Sections_bg, fg="black", font=("Calibri", int(8*zl)),anchor='w')
+GUI_HeaterTemp=tk.Label(GUI_TempFrame, bg=RGB_Sections_bg, fg="black", font= font_small,anchor='w')
 GUI_HeaterTemp.place(relx=0.45, rely=0.75, relwidth=0.5, relheight=0.1)
 # PID parameters button
-GUI_PID = tk.Button(GUI_TempFrame, text= "PID" , bg= RGB_Graph_b2, command=_PIDConfig, font=("Calibri", int(8*zl))) 
+GUI_PID = tk.Button(GUI_TempFrame, text= "PID" , bg= RGB_Graph_b2, command=_PIDConfig, font= font_small) 
 GUI_PID.place(relx=0.01, rely=1-0.15, relwidth=0.2, relheight=0.14)
 
 
@@ -578,33 +562,33 @@ GUI_PID.place(relx=0.01, rely=1-0.15, relwidth=0.2, relheight=0.14)
 GUI_StirrFrame=tk.Frame(GUI_ReactorFrame, bg= RGB_Sections_bg)
 GUI_StirrFrame.place(relx=1/3+0.005,rely=0.11, relwidth=1/3-0.01, relheight=0.86)
 # Stirring Label
-GUI_StirrLabel=tk.Label(GUI_StirrFrame, text="Stirring", bg=RGB_Stirring_title, fg="white", font=("Calibri", int(11*zl),'bold'), anchor="w")
+GUI_StirrLabel=tk.Label(GUI_StirrFrame, text="Stirring", bg=RGB_Stirring_title, fg="white", font= font_medium, anchor="w")
 GUI_StirrLabel.place(relx=0, rely=0, relwidth=1, relheight=0.14)
 # Stirring RPM
-GUI_MotorLabel=tk.Label(GUI_StirrFrame, text="Motor" , fg="black" , bg=RGB_Sections_bg,  font=("Calibri", int(9*zl),'bold'), anchor="w")
+GUI_MotorLabel=tk.Label(GUI_StirrFrame, text="Motor" , fg="black" , bg=RGB_Sections_bg,  font= font_small_bold, anchor="w")
 GUI_MotorLabel.place(relx=0.0, rely=0.14, relwidth=0.2, relheight=0.15)
-GUI_RpmLabel=tk.Label(GUI_StirrFrame, text="RPM ", bg= RGB_Sections_bg ,  font=("Calibri", int(9*zl)), anchor="w")
+GUI_RpmLabel=tk.Label(GUI_StirrFrame, text="RPM ", bg= RGB_Sections_bg ,  font= font_small, anchor="w")
 GUI_RpmLabel.place(relx=0.0, rely=0.3, relwidth=0.25, relheight=0.15)
-GUI_RpmValue=tk.Spinbox(GUI_StirrFrame, textvariable= TextVar.RPM, values=(1, 5, 10, 15, 30, 60), bg= 'white', fg="black", command= _spinRPM, font=("Calibri", int(13*zl)), relief="solid")
+GUI_RpmValue=tk.Spinbox(GUI_StirrFrame, values=(1, 5, 10, 15, 30, 60), bg= 'white', fg="black", command= _spinRPM, font= font_small, relief="solid")
 GUI_RpmValue.place(relx=0.14, rely=0.3, relwidth=0.25, relheight=0.15)
 # Duration label
-GUI_DurationLabel=tk.Label(GUI_StirrFrame, text="Inteval duration (mins)", fg="black",bg=RGB_Sections_bg,  font=("Calibri", int(10*zl), "bold"), anchor="w")
-GUI_DurationLabel.place(relx=0.45, rely=0.14, relwidth=0.55, relheight=0.15)
+GUI_DurationLabel=tk.Label(GUI_StirrFrame, text="Inteval duration (mins)", fg="black",bg=RGB_Sections_bg, font= font_small_bold, anchor="w")
+GUI_DurationLabel.place(relx=0.44, rely=0.14, relwidth=0.55, relheight=0.15)
 # On time label
-GUI_OnLabel=tk.Label(GUI_StirrFrame, text="ON" , fg="black" , bg=RGB_Sections_bg,  font=("Calibri", int(9*zl)), anchor="w")
-GUI_OnLabel.place(relx=0.5, rely=0.3, relwidth=0.2, relheight=0.15)
-GUI_OnValue=tk.Spinbox(GUI_StirrFrame, from_=1, to=60, textvariable=TextVar.TimeOn, fg="black", command= _spinOn, font=("Calibri", int(15*zl)), relief="solid")
+GUI_OnLabel=tk.Label(GUI_StirrFrame, text="ON" , fg="black" , bg=RGB_Sections_bg, font= font_small, anchor="w")
+GUI_OnLabel.place(relx=0.49, rely=0.3, relwidth=0.2, relheight=0.15)
+GUI_OnValue=tk.Spinbox(GUI_StirrFrame, from_=1, to=60, fg="black", command= _spinOn, font= font_small, relief="solid")
 GUI_OnValue.place(relx=0.6, rely=0.3, relwidth=0.25, relheight=0.15)
 # Off time label
-GUI_OffLabel=tk.Label(GUI_StirrFrame, text="OFF", bg= RGB_Sections_bg ,  font=("Calibri", int(9*zl)), anchor="w")
-GUI_OffLabel.place(relx=0.5, rely=0.5, relwidth=0.2, relheight=0.15)
-GUI_OffValue=tk.Spinbox(GUI_StirrFrame, textvariable= TextVar.TimeOff, from_=1, to=60 ,command=_spinOff, bg= 'white', fg="black",  font=("Calibri", int(13*zl)), relief="solid")
+GUI_OffLabel=tk.Label(GUI_StirrFrame, text="OFF", bg= RGB_Sections_bg , font= font_small, anchor="w")
+GUI_OffLabel.place(relx=0.49, rely=0.5, relwidth=0.2, relheight=0.15)
+GUI_OffValue=tk.Spinbox(GUI_StirrFrame, from_=1, to=60 ,command=_spinOff, bg= 'white', fg="black", font= font_small, relief="solid")
 GUI_OffValue.place(relx=0.6, rely=0.5, relwidth=0.25, relheight=0.15)
 # Stirring Status
-GUI_StirrStatus=tk.Label(GUI_StirrFrame, textvariable=TextVar.StirrStatus, bg= RGB_Stirring_ON, font=("Calibri", int(15*zl), "bold"))
+GUI_StirrStatus=tk.Label(GUI_StirrFrame, bg= RGB_Stirring_ON,font= font_medium)
 GUI_StirrStatus.place(relx=0.25, rely=0.7, relwidth=0.55, relheight=0.2)
 # Time counter
-GUI_StirrTime=tk.Label(GUI_StirrFrame, textvariable=TextVar.CurrTime, bg= RGB_Sections_bg, font=("Calibri", int(9*zl), "bold"),anchor='nw')
+GUI_StirrTime=tk.Label(GUI_StirrFrame, bg= RGB_Sections_bg, font= font_small,anchor='nw')
 GUI_StirrTime.place(relx=0.6, rely=0.9, relwidth=0.45, relheight=0.15)
 
 
@@ -614,25 +598,25 @@ GUI_StirrTime.place(relx=0.6, rely=0.9, relwidth=0.45, relheight=0.15)
 GUI_FeedFrame=tk.Frame(GUI_ReactorFrame, bg= RGB_Sections_bg)
 GUI_FeedFrame.place(relx=2/3, rely=0.11, relwidth=1/3, relheight=0.86)
 # Feeding Label
-GUI_FeedLabel=tk.Label(GUI_FeedFrame, text="Feeding Material", bg=RGB_Feeding_title, fg="white", font=("Calibri", int(11*zl),'bold'), anchor="w")
+GUI_FeedLabel=tk.Label(GUI_FeedFrame, text="Feeding Material", bg=RGB_Feeding_title, fg="white", font= font_medium, anchor="w")
 GUI_FeedLabel.place(relx=0, rely=0, relwidth=1, relheight=0.14)
 # Amount of material
-GUI_FeedAmountLabel=tk.Label(GUI_FeedFrame, text='Qty',  fg="black",bg=RGB_Sections_bg,  font=("Calibri", int(10*zl), "bold"), anchor="w")
+GUI_FeedAmountLabel=tk.Label(GUI_FeedFrame, text='Qty',  fg="black",bg=RGB_Sections_bg, font= font_small_bold, anchor="w")
 GUI_FeedAmountLabel.place(relx=0.1, rely=0.2, relwidth=0.15, relheight=0.15)
-GUI_FeedAmount= tk.Entry(GUI_FeedFrame, textvariable=TextVar.FeedAmount, font=("Calibri", int(9*zl), "bold"))
+GUI_FeedAmount= tk.Entry(GUI_FeedFrame, font= font_small)
 GUI_FeedAmount.place(relx=0.1, rely=0.35, relwidth=0.15, relheight=0.14)
 # Unit of material
-GUI_FeedUnitLabel=tk.Label(GUI_FeedFrame, text='Unit',  fg="black",bg=RGB_Sections_bg,  font=("Calibri", int(10*zl), "bold"), anchor="w")
+GUI_FeedUnitLabel=tk.Label(GUI_FeedFrame, text='Unit',  fg="black",bg=RGB_Sections_bg, font= font_small_bold, anchor="w")
 GUI_FeedUnitLabel.place(relx=0.27, rely=0.2, relwidth=0.2, relheight=0.15)
-GUI_FeedUnit= tk.Spinbox(GUI_FeedFrame, textvariable=TextVar.FeedUnit, font=("Calibri", int(9*zl), "bold"))
+GUI_FeedUnit= tk.Spinbox(GUI_FeedFrame, font= font_small)
 GUI_FeedUnit.place(relx=0.27, rely=0.35, relwidth=0.2, relheight=0.14)
 # Feed material
-GUI_FeedMaterialLabel=tk.Label(GUI_FeedFrame, text='Material',  fg="black",bg=RGB_Sections_bg,  font=("Calibri", int(10*zl), "bold"), anchor="w")
+GUI_FeedMaterialLabel=tk.Label(GUI_FeedFrame, text='Material',  fg="black",bg=RGB_Sections_bg,  font= font_small_bold, anchor="w")
 GUI_FeedMaterialLabel.place(relx=0.48, rely=0.2, relwidth=0.4, relheight=0.15)
-GUI_FeedMaterial= tk.Entry(GUI_FeedFrame, textvariable=TextVar.FeedMaterial, font=("Calibri", int(9*zl), "bold"))
+GUI_FeedMaterial= tk.Entry(GUI_FeedFrame, font= font_small)
 GUI_FeedMaterial.place(relx=0.48, rely=0.35, relwidth=0.4, relheight=0.14)
 # Enter button
-GUI_FeedInButton= tk.Button(GUI_FeedFrame, text= "Enter" , bg= 'white', command=_FeedMaterial, font=("Calibri", int(8*zl))) 
+GUI_FeedInButton= tk.Button(GUI_FeedFrame, text= "Enter" , bg= 'white', command=_FeedMaterial, font= font_small) 
 GUI_FeedInButton.place(relx=0.1, rely=0.55, relwidth=1-0.2, relheight=0.14)
 
 
@@ -648,16 +632,16 @@ graph.get_tk_widget().place(x=2,y=2, relwidth=0.9, relheight=0.95)
 
 
 # Hour button
-GUI_24HourButton= tk.Button(GUI_GraphicsCanvas, text= "DAY" , bg= RGB_Graph_b1, command= partial(UpdatePlot,days=1,ax=ax ), font=("Calibri", int(12*zl))) 
+GUI_24HourButton= tk.Button(GUI_GraphicsCanvas, text= "DAY" , bg= RGB_Graph_b1, command= partial(UpdatePlot,days=1,ax=ax ), font= font_medium) 
 GUI_24HourButton.place(relx=1-0.15, rely=1*(1/6) , relwidth= 0.15, relheight=(1/6) )
 # Week button
-GUI_WeekButton= tk.Button(GUI_GraphicsCanvas, text= "Week" , bg= RGB_Graph_b2, command=partial(UpdatePlot,days=7,ax=ax ), font=("Calibri", int(12*zl))) 
+GUI_WeekButton= tk.Button(GUI_GraphicsCanvas, text= "Week" , bg= RGB_Graph_b2, command=partial(UpdatePlot,days=7,ax=ax ), font= font_medium) 
 GUI_WeekButton.place(relx=1-0.15, rely=2*(1/6) , relwidth= 0.15, relheight=(1/6) )
 # Month button
-GUI_MonthButton= tk.Button(GUI_GraphicsCanvas, text= "Month" , bg= RGB_Graph_b2, command= partial(UpdatePlot,days=32,ax=ax ), font=("Calibri", int(12*zl))) 
+GUI_MonthButton= tk.Button(GUI_GraphicsCanvas, text= "Month" , bg= RGB_Graph_b2, command= partial(UpdatePlot,days=32,ax=ax ), font= font_medium) 
 GUI_MonthButton.place(relx=1-0.15, rely=3*(1/6) , relwidth= 0.15, relheight=(1/6) )
 # Update button
-GUI_UpdateButton= tk.Button(GUI_GraphicsCanvas,relief=GROOVE, text= "Update" , bg= RGB_Graph_b2, command= partial(UpdatePlot,days=0,ax=ax ), font=("Calibri", int(12*zl))) 
+GUI_UpdateButton= tk.Button(GUI_GraphicsCanvas,relief=GROOVE, text= "Update" , bg= RGB_Graph_b2, command= partial(UpdatePlot,days=0,ax=ax ), font= font_medium) 
 GUI_UpdateButton.place(relx=1-0.15, rely=5*(1/6) , relwidth= 0.15, relheight=(1/6) )
 
 
@@ -666,13 +650,13 @@ GUI_UpdateButton.place(relx=1-0.15, rely=5*(1/6) , relwidth= 0.15, relheight=(1/
 GUI_BottomBar= tk.Canvas(GUI_FRAME, bg='DarkGray')
 GUI_BottomBar.place(relx= 0, rely= 1- 0.04, relwidth= 1, relheight= 0.045 )
 #SERIAL PORT
-GUI_SerialPortLabel = tk.Label(GUI_BottomBar,text='PORT ',bg='DarkGray', font=('Calibri ',int(8*zl)),anchor='e')
+GUI_SerialPortLabel = tk.Label(GUI_BottomBar,text='PORT ',bg='DarkGray',font= font_small, anchor='e')
 GUI_SerialPortLabel.place(relx=0, rely=0, relwidth= 0.05, relheight=1)
 #
-GUI_SerialPortValue = tk.Spinbox(GUI_BottomBar,textvariable=TextVar.COM, values=com_arr, bg= 'white', font=('Calibri ',int(8*zl)), command= _SerialPortChange)
+GUI_SerialPortValue = tk.Spinbox(GUI_BottomBar, values=com_arr, bg= 'white', font= font_small, command= _SerialPortChange)
 GUI_SerialPortValue.place(relx=0.05,rely=0, relwidth= 0.1, relheight=1)
 #ARDUINO STATUS
-GUI_StatusInfo=tk.Label(GUI_BottomBar,bg= 'DarkGray', textvariable=TextVar.InfoBar , font=('Calibri ',int(9*zl),'bold'),anchor='e')
+GUI_StatusInfo=tk.Label(GUI_BottomBar,bg= 'DarkGray', font= font_small,anchor='e')
 GUI_StatusInfo.place(relx= 0.15, rely= 0, relwidth= 1-0.15, relheight= 1 )
 
 

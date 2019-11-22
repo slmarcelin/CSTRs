@@ -1,6 +1,5 @@
-from nanpy import (ArduinoApi, SerialManager, Stepper)
-import time
-from random import randrange
+from nanpy import (ArduinoApi, SerialManager, Stepper) #pip install nanpy
+import time 
 import math
 
 run =False
@@ -93,7 +92,7 @@ def ReadReactorTemp(ard):
         return Sensor
     except:
         run=False
-        print(['Temperature reading Failed]')
+        print('[Temperature reading Failed]')
 
 ## Get Temperature readings from the Heather
 def ReadHeatherTemp(ard):

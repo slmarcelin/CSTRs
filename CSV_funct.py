@@ -4,12 +4,12 @@ from time import *
 from datetime import datetime
 from pathlib import Path
 
+
+
 global SP, TimeOn, TimeOff, RPM, COM
 
-
-
-CsvFolder= '{}\{}'.format(Path(__file__).parent.absolute(),"CSV")
-SetupFile = '{}\{} '.format( CsvFolder,"Setup.csv")
+CsvFolder= '{}/{}'.format(Path(__file__).parent.absolute(),"CSV")
+SetupFile = '{}/{} '.format( CsvFolder,"Setup.csv")
 
 
 TempReactorName =[""]*6
@@ -117,7 +117,7 @@ def LOG(f,header='',v1='',v2='',v3='',v4=''):
 #This can mess up the entire program
 
 for i in range(6):
-    ReactorFolder[i] = '{}\Reactor_{}'.format( CsvFolder,i+1)
+    ReactorFolder[i] = '{}/Reactor_{}'.format( CsvFolder,i+1)
 
 if not os.path.exists(CsvFolder):
     os.mkdir(CsvFolder)
@@ -130,19 +130,19 @@ if not os.path.exists(CsvFolder):
             
             # Reactor Temperature file
             TempReactorName[i] = '{}-CSTR-{}-1.csv'.format(date ,i+1)
-            LOG(f ='{}\{}'.format(ReactorFolder[i],TempReactorName[i]) , header = 'Date,Reactor Temperature' )
+            LOG(f ='{}/{}'.format(ReactorFolder[i],TempReactorName[i]) , header = 'Date,Reactor Temperature' )
             
             # Heater Temperature file
             TempHeaterName[i] = '{}-CSTR-{}-2.csv'.format(date ,i+1)
-            LOG(f ='{}\{}'.format(ReactorFolder[i],TempHeaterName[i]) , header = 'Date,Heater Temperature' )
+            LOG(f ='{}/{}'.format(ReactorFolder[i],TempHeaterName[i]) , header = 'Date,Heater Temperature' )
             
             # Stering info file
             StirringInfoName[i] ='{}-CSTR-{}-3.csv'.format(date ,i+1)
-            LOG(f ='{}\{}'.format(ReactorFolder[i],StirringInfoName[i]) , header = 'Date,RPM,ON,OFF' )
+            LOG(f ='{}/{}'.format(ReactorFolder[i],StirringInfoName[i]) , header = 'Date,RPM,ON,OFF' )
             
             # Feeding material file
             FeedingMaterialName[i] = '{}-CSTR-{}-4.csv'.format(date ,i+1)
-            LOG(f ='{}\{}'.format(ReactorFolder[i],FeedingMaterialName[i]) , header = 'Date,Qty,Unit,Material' )
+            LOG(f ='{}/{}'.format(ReactorFolder[i],FeedingMaterialName[i]) , header = 'Date,Qty,Unit,Material' )
 
     # Create Setup file 
     setup_set(f = SetupFile)
