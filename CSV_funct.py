@@ -29,9 +29,9 @@ date = strftime("%Y-%m-%d", gmtime(time()))
 
 
 # THIS FUNCTION IS USED TO STORE THE CURRENT CONFIGURATION, WHEN THE APPLICATION IS CLOSED
-def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6,COM='COM13'):
+def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6, P=[1]*6, I=[2]*6, D=[3]*6,COM='COM13'):
    
-    data = [['']*6]*9
+    data = [['']*6]*15
 
     if os.path.exists(f):
         r = csv.reader(open(f)) # Here your csv file
@@ -41,7 +41,10 @@ def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6,COM='COM13')
     data[1] = TimeOn
     data[2] = TimeOff
     data[3] = RPM
-    data[4] = [COM]*6
+    data[4] = P
+    data[5] = I
+    data[6] = D
+    data[7] = [COM]*6
     
 
     with open(f, mode='w',newline='') as File:
@@ -52,10 +55,10 @@ def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6,COM='COM13')
 def setup_CSVnames(f, trn, thn, sin, fmn):
     r = csv.reader(open(f)) # Here your csv file
     data = list(r)
-    data[5] = trn
-    data[6] = thn
-    data[7] = sin
-    data[8] = fmn
+    data[8] = trn
+    data[9] = thn
+    data[10] = sin
+    data[11] = fmn
     
     with open(f, mode='w',newline='') as File:
         writer = csv.writer(File)
@@ -71,7 +74,7 @@ def setup_get(file=''):
 
     with open(file) as File:
 
-        global SP, TimeOn, TimeOff, RPM, COM, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
+        global SP, TimeOn, TimeOff, RPM, P,I,D, COM, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
         data = []
 
         reader =  csv.reader(File, delimiter=',')
@@ -82,13 +85,16 @@ def setup_get(file=''):
         TimeOn = list(map(int, data[1] ))
         TimeOff = list(map(int, data[2] ))
         RPM = list(map(int, data[3] ))
-        COM = data[4][0]
-        TempReactorName = list( data[5] )
-        TempHeaterName = list( data[6] )
-        StirringInfoName = list(data[7] )
-        FeedingMaterialName = list(data[8] )
+        P = list(map(int, data[4] ))
+        I = list(map(int, data[5] ))
+        D = list(map(int, data[6] ))
 
+        COM = data[7][0]
 
+        TempReactorName = list( data[8] )
+        TempHeaterName = list( data[9] )
+        StirringInfoName = list(data[10] )
+        FeedingMaterialName = list(data[11] )
 
 
 # THIS FUNCTION IS USED TO SAVE A REGISTER IN A CSV FILE
@@ -113,9 +119,8 @@ def LOG(f,header='',v1='',v2='',v3='',v4=''):
 
 
 
-#This is a very fragile if statement! Please do not change anything without consulting me
-#This can mess up the entire program
 
+# CREATE CSV FOLDER AND FILES ID THEY DO NOT EXIST
 for i in range(6):
     ReactorFolder[i] = '{}/Reactor_{}'.format( CsvFolder,i+1)
 
@@ -152,6 +157,17 @@ if not os.path.exists(CsvFolder):
 
 # Get last configuration status
 setup_get(SetupFile) 
+#print(SP)
+# print(TimeOn)
+# print(TimeOff)
+# print(COM)
+print(P)
+print(I)
+print(D)
+# print(TempHeaterName)
+# print(TempReactorName)
+# print(StirringInfoName)
+# print(FeedingMaterialName)
 
 #####################################################################
 
