@@ -1,14 +1,18 @@
-from nanpy import (ArduinoApi, SerialManager, Stepper) #pip install nanpy
+from nanpy import ArduinoApi, SerialManager, Stepper #pip install nanpy
+
 import time 
 import math
 
 run =False
 
 
-#### Pins #######
+#### Arduino Pins & variables #######
 HeatherTempSensor = 'A1'      #Heater Thermistor PIN
 ReactorTempSensor = 'A2'      #Reactor Thermistor PIN
 led=13
+stepsPerRevolution = 200
+#motor = Stepper(stepsPerRevolution, 8,9,10,11)
+
 #################
 
 
@@ -36,6 +40,7 @@ def ArdSetup(ard):
         ard.pinMode(HeatherTempSensor, ard.INPUT)
         ard.pinMode(ReactorTempSensor, ard.INPUT)
         ard.pinMode(led, ard.OUTPUT)
+
         print('[Arduino setup...OK]')
         run = True
     except:
@@ -44,20 +49,15 @@ def ArdSetup(ard):
 
 
 ## 
-def ControlStirringMotors(ard,rpm=10,en=True):
+def ControlStirringMotors(ard,rpm,en=True):
     global run
     try:
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
+
+
+
+        print(rpm)
+        #myStepper.setSpeed(motorSpeed)
+
         run = True
     except:
         run=False
@@ -65,16 +65,15 @@ def ControlStirringMotors(ard,rpm=10,en=True):
 
 
 ## SET OUTPUTS for Heater
-def ControlHeaters(ard,op=0.1,en=True):
+def ControlHeaters(ard,react,op,en=True):
     global run
     try:
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.LOW)
+        if react == 0:
+            
+            #HEATER OUTPUT
+            ard.digitalWrite(7,ard.LOW)
+            print('Heating at ' +str(op) )
+        
         run = True
     except:
         run=False
