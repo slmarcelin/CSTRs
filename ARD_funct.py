@@ -1,15 +1,24 @@
-from nanpy import (ArduinoApi, SerialManager, Stepper) #pip install nanpy
+from nanpy import ArduinoApi, SerialManager, Stepper #pip install nanpy
+
 import time 
 import math
 
 run =False
 
 
-#### Pins #######
-HeatherTempSensor = 'A1'      #Heater Thermistor PIN
-ReactorTempSensor = 'A2'      #Reactor Thermistor PIN
-led=13
+#### Arduino Pins & variables #######
+HeatherTempSensor = ['A1','A1','A1','A1','A1','A1'] #Heater Thermistor PIN
+ReactorTempSensor = ['A2','A2','A2','A2','A2','A2'] #Reactor Thermistor PIN
+StirringMotor = [[46,47,48,49],[46,47,48,49],[46,47,48,49],[46,47,48,49],[46,47,48,49],[46,47,48,49]] # Stirring motor output
+#PWM, pins 2-13
+Output_heater = [3,3,3,3,3,3] #PWM outputs for heaters
 #################
+
+
+led=13
+stepsPerRevolution = 200
+#motor = Stepper(stepsPerRevolution, 8,9,10,11)
+
 
 
 ## CONNECT FUNCTION ##
@@ -19,12 +28,12 @@ def ArdConnect(com):
   
         connection = SerialManager(device=com)
         ard = ArduinoApi(connection=connection)
-        print("[Arduino connected]")
+        print(">>Arduino connected]")
         run = True
         return ard
     except:
         run=False
-        print('[Connection Failed]')
+        print('->Arduino is not connected')
         return 'EMPTY'
 
 # ArdConnect('COM15')
@@ -36,6 +45,7 @@ def ArdSetup(ard):
         ard.pinMode(HeatherTempSensor, ard.INPUT)
         ard.pinMode(ReactorTempSensor, ard.INPUT)
         ard.pinMode(led, ard.OUTPUT)
+
         print('[Arduino setup...OK]')
         run = True
     except:
@@ -44,67 +54,48 @@ def ArdSetup(ard):
 
 
 ## 
-def ControlStirringMotors(ard,rpm=10,en=True):
+def ControlStirringMotors(ard,i,rpm,en=True):
     global run
     try:
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(rpm)
-        ard.digitalWrite(led, ard.LOW)
+
+        rpm=rpm
+        #myStepper.setSpeed(motorSpeed)
+
         run = True
     except:
         run=False
         print('[Stirring motors Failed]')
 
-
 ## SET OUTPUTS for Heater
-def ControlHeaters(ard,op=0.1,en=True):
+def ControlHeaters(ard,i,op,en=True):
     global run
     try:
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.LOW)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.HIGH)
-        time.sleep(op)
-        ard.digitalWrite(led, ard.LOW)
+        ard.digitalWrite(Output_heater[i], op)
         run = True
     except:
         run=False
         print('[Heating Failed]')
 
-
-
 ## Get Temperature readings from the Reactor
-def ReadReactorTemp(ard):
+def ReadReactorTemp(ard,i):
     global run
     try:
-        s =  ReadToCelcious( ard.analogRead(ReactorTempSensor) )
-        Sensor = [s]*6
+        read =  ReadToCelcious( ard.analogRead(ReactorTempSensor[i]) )
         run = True
-        return Sensor
+        return read
     except:
         run=False
         print('[Temperature reading Failed]')
 
 ## Get Temperature readings from the Heather
-def ReadHeatherTemp(ard):
+def ReadHeatherTemp(ard,i):
     global run
     try:
-        s = ReadToCelcious( ard.analogRead(HeatherTempSensor) )
-        Sensor = [s]*6
+        read = ReadToCelcious( ard.analogRead(HeatherTempSensor[i]) )
         run = True
-        return Sensor
+        return read
     except:
         run=False
-
 
 ## https://learn.adafruit.com/thermistor/using-a-thermistor
 def ReadToCelcious(read):
@@ -132,3 +123,17 @@ def ReadToCelcious(read):
     steinhart = steinhart - 273.15 
 
     return round(steinhart,1)
+
+def ValidateConnection(ard):
+    global run
+    try:
+        r=ard.digitalRead(led)
+        if r:
+            ard.digitalWrite(led, ard.LOW )
+        else:
+            ard.digitalWrite(led, ard.HIGH )
+        run = True
+        return True
+    except:
+        run=False
+        return False

@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 
-global SP, TimeOn, TimeOff, RPM, COM
+global SP, TimeOn, TimeOff, RPM, COM, Enable
 
 CsvFolder= '{}/{}'.format(Path(__file__).parent.absolute(),"CSV")
 SetupFile = '{}/{} '.format( CsvFolder,"Setup.csv")
@@ -29,7 +29,7 @@ date = strftime("%Y-%m-%d", gmtime(time()))
 
 
 # THIS FUNCTION IS USED TO STORE THE CURRENT CONFIGURATION, WHEN THE APPLICATION IS CLOSED
-def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6, P=[1]*6, I=[2]*6, D=[3]*6,COM='COM13'):
+def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6, P=[1]*6, I=[2]*6, D=[3]*6,Enable=[1,0,0,0,0,0],COM='COM15'):
    
     data = [['']*6]*15
 
@@ -45,6 +45,7 @@ def setup_set(f='',SP=[35]*6,TimeOn=[10]*6,TimeOff=[5]*6,RPM=[30]*6, P=[1]*6, I=
     data[5] = I
     data[6] = D
     data[7] = [COM]*6
+    data[12] = Enable
     
 
     with open(f, mode='w',newline='') as File:
@@ -74,7 +75,7 @@ def setup_get(file=''):
 
     with open(file) as File:
 
-        global SP, TimeOn, TimeOff, RPM, P,I,D, COM, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
+        global SP, TimeOn, TimeOff, RPM, P,I,D, COM, Enable, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
         data = []
 
         reader =  csv.reader(File, delimiter=',')
@@ -96,6 +97,10 @@ def setup_get(file=''):
         StirringInfoName = list(data[10] )
         FeedingMaterialName = list(data[11] )
 
+        Enable = list( data[12])
+        for i in range( len(Enable) ):
+            Enable[i] = Enable[i] in ('true','True','1')
+
 
 # THIS FUNCTION IS USED TO SAVE A REGISTER IN A CSV FILE
 def LOG(f,header='',v1='',v2='',v3='',v4=''):
@@ -104,7 +109,7 @@ def LOG(f,header='',v1='',v2='',v3='',v4=''):
     date = strftime("%Y-%m-%d %H:%M:%S", gmtime(time()))
 
     if os.stat(f).st_size == 0:
-        file.write(header+'\n')
+        file.write(header)
 
     if v1 != '':
         file.write(str(date))
@@ -161,13 +166,14 @@ setup_get(SetupFile)
 # print(TimeOn)
 # print(TimeOff)
 # print(COM)
-print(P)
-print(I)
-print(D)
+#print(P)
+#print(I)
+#print(D)
 # print(TempHeaterName)
 # print(TempReactorName)
 # print(StirringInfoName)
 # print(FeedingMaterialName)
+#print(Enable)
 
 #####################################################################
 
