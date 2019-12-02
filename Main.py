@@ -377,34 +377,31 @@ def _PIDWindow():
 	top.geometry('{}x{}+{}+{}'.format( int(w/3),int(h/3), GUI_window.winfo_x()+int(w/3) , GUI_window.winfo_y()+int(h/3)) )
 
 	i=selReact
-
+	Label(top, text="Tunning parameters").grid(row=0,columnspan=2)
 	# P value
-	PID_PLabel = tk.Label(top, text='P', fg="black" )
-	PID_PLabel.grid(row=2, column=1)
+	Label(top, text="Kp").grid(row=1)
 	PID_PValue = tk.Entry(top, fg="green")
 	PID_PValue.insert(0, Reactor[i].P)
-	PID_PValue.grid(row=2, column=2)
+	PID_PValue.grid(row=1, column=1)
 
 	# I value
-	PID_ILabel = tk.Label(top, text='I', fg="black" )
-	PID_ILabel.grid(row=3, column=1)
+	Label(top, text="Ki").grid(row=2)
 	PID_IValue = tk.Entry(top, fg="green")
 	PID_IValue.insert(0, Reactor[i].I)
-	PID_IValue.grid(row=3, column=2)
+	PID_IValue.grid(row=2, column=1)
 
 	# D value
-	PID_DLabel = tk.Label(top, text='D', fg="black" )
-	PID_DLabel.grid(row=4, column=1)
+	Label(top, text="Kd").grid(row=3)
 	PID_DValue = tk.Entry(top, text=Reactor[i].D, fg="green")
 	PID_DValue.insert(0, Reactor[i].D)
-	PID_DValue.grid(row=4, column=2)
+	PID_DValue.grid(row=3, column=1)
+
 
 	def enter_btn():
 
 		Reactor[i].P = PID_PValue.get()
 		Reactor[i].I = PID_IValue.get()
 		Reactor[i].D = PID_DValue.get()
-		print('P: '+str(Reactor[i].P))
 
 		print("PID PARAMETERS CHANGED")
 
@@ -458,7 +455,7 @@ def UpdatePlot(days,ax):
 		GUI_MonthButton.configure(bg= RGB_Graph_b2,relief=GROOVE)
 		GraphTitle = "Hour Rate" #Title of the graph
 		xlabel = 'Last 24 hours' #set the x axis label
-		rate='30min'
+		rate='1min'
 
 	if selRange == 7:
 		#desiredRange=datetime.timedelta(days=7) #obtain date for last 24 hrs
@@ -468,7 +465,7 @@ def UpdatePlot(days,ax):
 		GUI_MonthButton.configure(bg= RGB_Graph_b2,relief=GROOVE)
 		GraphTitle = "Week Rate" #Title of the graph
 		xlabel = 'Last 7 days' #set the x axis label
-		rate='D'
+		rate='12h'
 
 	if selRange == 32:
 		#desiredRange=datetime.timedelta(days=32) #obtain date for last 24 hrs
