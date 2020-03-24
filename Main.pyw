@@ -1,26 +1,28 @@
 # !/usr/bin/python3
-from simple_pid import PID
-import PandaFunct as Panda
-import ArdFunct as ard
-import CsvFunct as CSV
-import matplotlib.pyplot as plt
+
+# ==== Required Packages =================================================
+# Site Packages -----
+from simple_pid import PID #https://pypi.org/project/simple-pid/
+import matplotlib.pyplot as plt #https://pypi.org/project/matplotlib/
 import matplotlib.dates as mdates
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import os
+from PIL import Image, ImageTk #https://pypi.org/project/Pillow/
 
+# Inbuilt packages ------
+import tkinter as tk
+import serial.tools.list_ports
 import sys
-from datetime import datetime, timedelta
+import os
 from functools import partial
 from threading import Timer
-from PIL import Image, ImageTk
-import tkinter as tk
-# from tkinter import (Tk, Frame, Button, Entry, Canvas, Label,
-# Spinbox, messagebox, Toplevel)
+from datetime import datetime, timedelta
 
+# Project files ---------
+import ArdFunct as ard
+import CsvFunct as CSV
+import PandaFunct as Panda
+# ==== Required Packages (END) ===============================================
 
-no_reactors = 6  # Number of reactors
-rng = range(no_reactors)  # index of reactores
 
 
 # --- Definition of _Reactor class and object creation -------------------
@@ -32,30 +34,29 @@ class Reactor(object):
 
         # Temperature Control part
         self.SP = CSV.SP  # Desired temperature in °C
-        self.PV = [0] * no_reactors  # Actual temperature in °C
-        self.prevTemp = [0] * no_reactors  # Previous heater temperature
-        self.HeaterTemp = [0] * no_reactors  # Heater temeperature read in °C
-        self.OP = [0] * no_reactors  # power of Heater (0-100% )
+        self.PV = [0] * 6  # Actual temperature in °C
+        self.prevTemp = [0] * 6  # Previous heater temperature
+        self.HeaterTemp = [0] * 6  # Heater temeperature read in °C
+        self.OP = [0] * 6  # power of Heater (0-100% )
         self.Kp = list(CSV.Kp)
 
         self.Ki = CSV.Ki
         self.Kd = CSV.Kd   # PID parameters
-        self.ThermalProtect = [0] * no_reactors  # Thermal protection alert
+        self.ThermalProtect = [0] * 6  # Thermal protection alert
 
         # Stirring Control part
         self.TimeOn = CSV.TimeOn    # Stirring duration in ON state
         self.TimeOff = CSV.TimeOff  # Stirring duration in OFF state
-        self.StateTime = [datetime.now()] * no_reactors  # Time when state changed
+        self.StateTime = [datetime.now()] * 6  # Time when state changed
         self.RPM = CSV.RPM  # Speed of stirring
-        self.StirrState = [True]*no_reactors  # Stirring state (On/Off)
-
+        self.StirrState = [True]*6  # Stirring state (On/Off)
+# ------------------------------------------------------------------------
 
 # Create a _Reactor class object
 Reactor = Reactor(
     Name=['Reactor1', 'Reactor2', 'Reactor3',
           'Reactor4', 'Reactor5', 'Reactor6']
 )
-
 
 # Definition of PID for every reactor
 pid1 = PID(Reactor.Kp[0], Reactor.Ki[0], Reactor.Kd[0], Reactor.SP[0])
@@ -64,7 +65,6 @@ pid3 = PID(Reactor.Kp[2], Reactor.Ki[2], Reactor.Kd[2], Reactor.SP[2])
 pid4 = PID(Reactor.Kp[3], Reactor.Ki[3], Reactor.Kd[3], Reactor.SP[3])
 pid5 = PID(Reactor.Kp[4], Reactor.Ki[4], Reactor.Kd[4], Reactor.SP[4])
 pid6 = PID(Reactor.Kp[5], Reactor.Ki[5], Reactor.Kd[5], Reactor.SP[5])
-
 pid1.output_limits = (0, 100)
 pid2.output_limits = (0, 100)
 pid3.output_limits = (0, 100)
@@ -74,29 +74,16 @@ pid6.output_limits = (0, 100)
 # -----------------------------------------------------------------------------
 
 
-# ==== Arduino Serial communication port======================================
-# Port in which Arduino is connected
-serial_ports = ['dev/ttyUSB0',
-                'dev/ttyUSB1',
-                'dev/ttyUSB2',
-                'dev/ttyUSB3']  # List of communication ports(RaspberyPi)
-serial_ports = ['COM10', 'COM15']  # List of communication ports(Windows)
-
-com = CSV.COM  # Communication port to initialize GUI()
-# ===========================================================================
-
 
 # ==== Application functions =================================================
-
+#
 # --- Stirring control by timmer ---------------------------------------------
 # In this function, the stirring state is going to be managed...
-#
-# A stirring state(On/Off) is going to change untill the curent time is equal
-# to the time when the state started(StateTime), plus the duration of
-# the state(TimeOn or TimeOff)
-#
-# If an Arduino connection is not established or the current reactor
-# is 'disabled', the stirring state is going to remain same
+# - A stirring state(On/Off) is going to change untill the curent time is equal
+#   to the time when the state started(StateTime), plus the duration of
+#   the state(TimeOn or TimeOff)
+# - If an Arduino connection is not established or the current reactor
+#   is 'disabled', the stirring state is going to remain same
 def StirrOnOff():
 
     global StirrOnOffTimer  # Timmer used to loop this function
@@ -149,11 +136,7 @@ def StirrOnOff():
     StirrOnOffTimer.start()
 # ----------------------------------------------------------------------------
 
-
-# Update apparence of Labels, Texts and Buttons from GUI
-# Explain
-# Explain
-# Explain
+# Update apparence and values of Labels, Texts and Buttons from GUI --
 def GuiOutputUpdate():
 
     global GuiUpdateOutputsTimer  # Timmer used to loop this function
@@ -163,7 +146,7 @@ def GuiOutputUpdate():
 
     # --- Left frame --------------------
     # date display
-    dateStr = datenow.strftime('%d %b, %Y\n %H:%M:%S')
+    dateStr = datenow.strftime('%d %B, %Y\n %H:%M:%S')
     GUI_Clock.configure(text=dateStr)
 
     # Reactor buttons
@@ -180,11 +163,11 @@ def GuiOutputUpdate():
 
     # Enable/Disable button configuration
     if Reactor.Enable[r] is True:
-        GUI_Enable_Buttone.configure(text='Enabled',
-                                     bg=RGB_Enable, fg='white')
+        GUI_Enable_Button.configure(text='Enabled',
+                                     bg='green2', fg='dark green')
     else:
-        GUI_Enable_Buttone.configure(text='Disabled',
-                                     bg=RGB_Disabled, fg='GRAY10')
+        GUI_Enable_Button.configure(text='Disabled',
+                                     bg='red', fg='dark red')
     # ------------------------------------
 
     # --- Temperature frame --------------
@@ -200,9 +183,9 @@ def GuiOutputUpdate():
     # --- Stirring frame -----------------
     # Stirring state
     if Reactor.StirrState[r] is True:
-        GUI_StirrState_Label.configure(text='ON', bg=RGB_Stirring_ON)
+        GUI_StirrState_Label.configure(text='ON', bg='lime green')
     else:
-        GUI_StirrState_Label.configure(text='OFF', bg=RGB_Stirring_OFF)
+        GUI_StirrState_Label.configure(text='OFF', bg='dark green')
     # Duration of current status
     s = (datetime.now() - Reactor.StateTime[r]).total_seconds()
     time = 'Timer: {:02d}:{:02d}:{:02d}'.format(
@@ -212,30 +195,38 @@ def GuiOutputUpdate():
     GUI_StirrTime_Label.configure(text=time)
     # ------------------------------------
 
-    # --- Bottom state bar ---------------
+    # --- Bottom state bar -------------------
+    # -Serial communication ports-
+    ports = serial.tools.list_ports.comports()
+    serial_ports = ['--']
+    for port in sorted(ports):
+        serial_ports.append(port.device)
+    GUI_SerialPortValue.configure(values=serial_ports)
+    GUI_SerialPortValue.delete(0, "end")
+    GUI_SerialPortValue.insert(0, com)
+
+    # connection status
     if A is not False:
         GUI_StateInfo.configure(text='Connected', fg='green4')
     else:
         GUI_StateInfo.configure(text='Connecting', fg='red')
+
     # Thermal protection
     for i in range(6):
         if Reactor.ThermalProtect[r]:
             GUI_ErrorInfo[r].configure(bg='red')
         else:
             GUI_ErrorInfo[r].configure(bg='GRAY84')
-    # ------------------------------------
+    # --------------------------------------
+
 
     # --- Loop this function on a timer threading ----
     GuiUpdateOutputsTimer = Timer(1, GuiOutputUpdate)
     GuiUpdateOutputsTimer.daemon = True
     GuiUpdateOutputsTimer.start()
-# ----------------------------------------------------------------------------
-
-
-# Update the Entry elements from the User interface
-# Explain
-# Explain
-# Explain
+# --------------------------------------------------------------------
+#
+# Update the input elements from the User interface of the GUI ------
 def GUI_EntriesUpdate():
 
     r = selReact  # Actual selected reactor(to be used as index)
@@ -263,19 +254,21 @@ def GUI_EntriesUpdate():
     GUI_Off_Value.delete(0, 'end')  # TimeOn Spin
     GUI_Off_Value.insert(0, str(Reactor.TimeOff[r]))
     GUI_Off_Value.configure(state='readonly')
-# ----------------------------------------------------------------------------
-
+# -------------------------------------------------------------------
 
 # Get new temperature values from arduino and manipulate actuators
-# Explain
-# Explain
-# Explain
+# - Request new information to arduino(temperature values) and control
+#   the heaters
+# - The thermal protection is implemented here, to ensure a normal functionality
+# - When an arduino connection is not established, this function is going to
+#   try to start a connection with the selected serial communication port
+# - This function is going to be called every 5 seconds
 def UpdateStatus():
     global A,        UpdateStatusTimer
 
-    # Get Reactor temperatures
+    # Get Reactor temperatures(actual temperature)
     Reactor.PV = ard.ReadReactorTemp(A, Reactor.Enable)
-    # Calculate OP
+    # Calculate OP with the PID functions
     Reactor.OP = PIDfunct()
     # Get Heater temperatures
     Reactor.HeaterTemp = ard.ReadHeaterTemp(A, Reactor.Enable)
@@ -300,15 +293,12 @@ def UpdateStatus():
             msg = 'Heater from Reactor{} is not working'.format(i+1)
             tk.messagebox.showwarning('Thermal protection', msg)
             print(msg)
-
     # --------------------------------------------------------------------------
-
-    # Control stirring motors
-    # ard.StepperMotorReconfig(A, Reactor.RPM, Reactor.StirrState, Reactor.OP)
 
     # Control heatres
     ard.ControlHeaters(A, Reactor.OP, Reactor.Enable)
 
+    # Attempt to connect arduino(when connection is not established)
     if not(ard.run):
         A = ard.ArdConnect(com)
         if ard.run:
@@ -316,11 +306,11 @@ def UpdateStatus():
 
     Reactor.prevTemp = Reactor.PV  # Save the last temperture(used for thermal protection)
 
+    # Timed repeated function
     UpdateStatusTimer = Timer(5, UpdateStatus)
     UpdateStatusTimer.daemon = True
     UpdateStatusTimer.start()
-# ------------------------------------------------------------
-
+# ------------------------------------------------------------------
 
 # Save the current temperature values in the CSV file
 def DataLogger():
@@ -329,7 +319,7 @@ def DataLogger():
     if ard.run:
         date = datetime.strftime(datetime.now(), '%Y-%m-%d')
 
-        for i in rng:
+        for i in range(6):
             if Reactor.Enable[i] and \
                Reactor.PV != 0 and \
                Reactor.HeaterTemp != 0:
@@ -422,7 +412,6 @@ def DataLogger():
     MinuteLoopTimer.start()  # Restart Timer
 # ------------------------------------------------------------
 
-
 # Check if the file is older than 30 days or bigger than 10 MB
 # Return True when the file is older than 30 days OR bigger than 10 MB
 def fileCheck(fileName, path, reactor):
@@ -443,8 +432,7 @@ def fileCheck(fileName, path, reactor):
         return False
 # ------------------------------------------------------------
 
-
-# Get the OP value in (0-100%), input SP,PV
+# Get the Operation point(OP) value in (0-100%)
 def PIDfunct():
     op = [0] * 6
 
@@ -462,19 +450,16 @@ def PIDfunct():
         op[5] = pid6(Reactor.PV[5])
     return op
 # ------------------------------------------------------------
+#
+# ==== Application functions (END) ============================================
 
 
-# Returns a text from bool variable
-def BoolToText(bool, T='True', F='False'):
-    if bool:
-        return T
-    else:
-        return F
-# ------------------------------------------------------------
-
-
-# ---- Function commands of GUI objects ------------------------------------
+# ==== Function commands used in GUI Objects ==================================
+#
+# Change of a resired temperature value
 def _spinSP():
+
+    #Update vallue
     Reactor.SP[selReact] = int(GUI_TargetTemp_Value.get())
 
     # Change setpoint of the corresponding PID
@@ -492,33 +477,39 @@ def _spinSP():
         pid6.setpoint = Reactor.SP[selReact]
 
     print('Reactor{}, SP changed'.format(selReact))
+#--------------------------------------
 
-
+#Change of the 'ON' duration of stiring device
 def _spinOn():
+    #Update vallue
     Reactor.TimeOn[selReact] = int(GUI_On_Value.get())
     print('Reactor{}, TimerOn changed', format(selReact))
+#-----------------------------------------------
 
-
+#Change of the 'OFF' duration of stiring device
 def _spinOff():
+    #Update vallue
     Reactor.TimeOff[selReact] = int(GUI_Off_Value.get())
     print('Reactor{}, TimerOff changed', format(selReact))
+#-----------------------------------------------
 
-
+#Change of the speed of stiring device
 def _spinRPM():
 
+    #Update vallue
     Reactor.RPM[selReact] = int(GUI_Rpm_Value.get())
     print('Reactor', selReact + 1, 'changed to', Reactor.RPM[selReact], 'RPMs')
+#-----------------------------------------------
 
-
+#Change of serial communication port
 def _SerialPortChange():
     global com, A
     com = GUI_SerialPortValue.get()
-    print('Serial Port changed')
+    print('Selected serial port:',com)
     return True
+#-----------------------------------------------
 
-# When the Enable/Disable button is pressed
-
-
+# Change of state of Enable button
 def _EnableClick():
 
     # (Enable/Disable) Reactor
@@ -531,10 +522,9 @@ def _EnableClick():
 
     GUI_EntriesUpdate()  # update input elements in GUI
     GuiOutputUpdate()  # update labels in GUI
+# ------------------------------------------------
 
-# -----------------------------------------------------------------------------
-
-
+# Entering of new feeding material data
 def _FeedMaterial():
     date = datetime.strftime(datetime.now(), '%Y-%m-%d')
 
@@ -582,8 +572,9 @@ def _FeedMaterial():
     GUI_Unit_value.delete(0, 'end')
     GUI_Material_value.delete(0, 'end')
     print('Material fed')
+# ------------------------------------------------
 
-
+# Pressing of PID changing parameter button
 def _PIDWindow():
     print('PID configuration')
 
@@ -648,8 +639,9 @@ def _PIDWindow():
     canvas = FigureCanvasTkAgg(figure1, GUI_Pid_ButtonFrame2)
     canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
     top.mainloop()
+# ------------------------------------------------
 
-
+# Pressing of a Reactor selecting button
 def _ChangeReactor(r=0):
     global selReact
     selReact = r
@@ -659,8 +651,9 @@ def _ChangeReactor(r=0):
     GUI_EntriesUpdate()
     GuiOutputUpdate()
     UpdatePlot(days=selRange, ax=ax)
+# ------------------------------------------------
 
-
+# Update of a ploth by a selected range(by buttons)
 def UpdatePlot(days, ax):
 
     global selRange, selReact
@@ -684,9 +677,9 @@ def UpdatePlot(days, ax):
         # desiredRange=datetime.timedelta(hours=24) #obtain date for last 24
         # hrs
 
-        GUI_24HourButton.configure(bg=RGB_Graph_b1, relief='sunken')
-        GUI_WeekButton.configure(bg=RGB_Graph_b2, relief='raised')
-        GUI_MonthButton.configure(bg=RGB_Graph_b2, relief='raised')
+        GUI_24HourButton.configure( relief='sunken')
+        GUI_WeekButton.configure( relief='raised')
+        GUI_MonthButton.configure(relief='raised')
         GraphTitle = 'Hour Rate'  # Title of the graph
         xlabel = 'Last 24 hours'  # set the x axis label
         rate = '360min'
@@ -695,9 +688,9 @@ def UpdatePlot(days, ax):
     if selRange == 7:
         # desiredRange=datetime.timedelta(days=7) #obtain date for last 24 hrs
 
-        GUI_24HourButton.configure(bg=RGB_Graph_b2, relief='raised')
-        GUI_WeekButton.configure(bg=RGB_Graph_b1, relief='sunken')
-        GUI_MonthButton.configure(bg=RGB_Graph_b2, relief='raised')
+        GUI_24HourButton.configure( relief='raised')
+        GUI_WeekButton.configure( relief='sunken')
+        GUI_MonthButton.configure( relief='raised')
         GraphTitle = 'Week Rate'  # Title of the graph
         xlabel = 'Last 7 days'  # set the x axis label
         rate = '12h'
@@ -705,9 +698,9 @@ def UpdatePlot(days, ax):
     if selRange == 32:
         # desiredRange=datetime.timedelta(days=32) #obtain date for last 24 hrs
 
-        GUI_24HourButton.configure(bg=RGB_Graph_b2, relief='raised')
-        GUI_WeekButton.configure(bg=RGB_Graph_b2, relief='groove')
-        GUI_MonthButton.configure(bg=RGB_Graph_b1, relief='raised')
+        GUI_24HourButton.configure( relief='raised')
+        GUI_WeekButton.configure( relief='groove')
+        GUI_MonthButton.configure( relief='raised')
         GraphTitle = 'Month Rate'  # Title of the graph
         xlabel = 'Last 32 days'  # set the x axis label
         rate = 'D'
@@ -754,42 +747,35 @@ def UpdatePlot(days, ax):
     graph.draw()
 
     print('PLOT UPDATED')
-# ----------------------------------------------------------------------------
+# ---------------------------------------------
+#
+# ==== Function commands used in GUI Objects (END) ============================
 
 
-# ----- INITIAL CODE --------------------------------------------------------
-A = ard.ArdConnect(com)
-if ard.run:
-    ard.ArdSetup(A)
-# ---------------------------------------------------------------------------
+# ==== GUI SECTION ============================================================
+
+selReact = 0 # Current selected reactor to be displayed
+selRange = 1 # Selected range to be ploted
+
+# ---- Arduino Serial communication port --------------------
+serial_ports = []  # List of communication ports
+com = CSV.COM  # Initialize communication port to the last saved value
+A=[] # variable used to store communication object
 
 
-# ---- GUI CODE ------------------------------------------------------------
-
-# Selected reactor to be displayed
-selReact = 0
-# Selected range to be ploted
-selRange = 1
 
 # Color formats
 RGB_LeftBar_DarkBlue = '#{:02X}{:02X}{:02X}'.format(0, 0, 140)
 RGB_LeftBar_MidBlue = '#{:02X}{:02X}{:02X}'.format(82, 136, 174)
 RGB_LeftBar_LightBlue = '#{:02X}{:02X}{:02X}'.format(199, 214, 221)
+
+RGB_Temperature_title = 'dodgerBlue4'
+RGB_Stirring_title = 'springgreen4'
+RGB_Feeding_title = 'gold'
 #
-RGB_Temperature_title = '#{:02X}{:02X}{:02X}'.format(27, 61, 88)
-RGB_Stirring_title = '#{:02X}{:02X}{:02X}'.format(27, 124, 41)
-RGB_Feeding_title = '#{:02X}{:02X}{:02X}'.format(242, 208, 1)
-RGB_Enable = '#{:02X}{:02X}{:02X}'.format(41, 75, 187)
-RGB_Disabled = '#{:02X}{:02X}{:02X}'.format(198, 198, 198)
+RGB_Sections_bg = 'gray92'
 #
-RGB_Sections_bg = '#{:02X}{:02X}{:02X}'.format(235, 236, 232)
-RGB_Sections_bg = '#{:02X}{:02X}{:02X}'.format(230, 230, 230)
-#
-RGB_Stirring_ON = '#{:02X}{:02X}{:02X}'.format(60, 255, 108)
-RGB_Stirring_OFF = '#{:02X}{:02X}{:02X}'.format(0, 85, 15)
-#
-RGB_Graph_b1 = '#{:02X}{:02X}{:02X}'.format(181, 197, 196)
-RGB_Graph_b2 = '#{:02X}{:02X}{:02X}'.format(237, 241, 244)
+RGB_Graph_b1 = 'gray79'
 
 
 # Main Window
@@ -799,20 +785,20 @@ GUI_Main_Window = tk.Tk()
 sw = GUI_Main_Window.winfo_screenwidth()  # width of the screen
 sh = GUI_Main_Window.winfo_screenheight()  # height of the screen
 GUI_Main_Window.title('CSRT Reactors control')
-# GUI_Main_Window.iconbitmap()
 
 # Main window size and zoom
-z = 0.85   # Main window zoom(from screen size)
+z = 0.7  # Main window zoom(from screen size)
 w = int(sw * z) - 70  # width for the Tk root
 h = int(sh * z) - 70  # height for the Tk root
 zl = 1.5 * z  # Font zoom
 
 # Font config
 font_name = 'calibri'
-font_small = (font_name, int(10 * zl))   			# Small
-font_small_bold = (font_name, int(10 * zl), 'bold')   # Smallbold
-font_medium = (font_name, int(12 * zl))				# medium
-font_big = (font_name, int(32 * zl))  # big
+font_small = (font_name, int(10 * zl))
+font_small_bold = (font_name, int(10 * zl), 'bold')
+font_medium = (font_name, int(12 * zl))
+font_medium_bold = (font_name, int(12 * zl),'bold')
+font_big = (font_name, int(32 * zl))
 
 
 # Calculate x and y coordinates to center the Main window
@@ -821,7 +807,7 @@ y = (sh / 2) - (h / 2)
 # Configurate size and position of Main window
 GUI_Main_Window.geometry('%dx%d+%d+%d' % (w, h, x, 0))
 GUI_Main_Window.resizable(0, 0)
-# GUI_Main_Window.state('zoomed')
+#GUI_Main_Window.state('zoomed')
 
 
 # ----- Left section of GUI  -------------------------------
@@ -831,19 +817,18 @@ GUI_Selection_Area.place(relx=0, rely=0, relwidth=0.2, relheight=1)
 # Date info
 GUI_Clock = tk.Label(GUI_Selection_Area,
                      bg='blue', fg='white',
-                     font=font_small_bold)
-GUI_Clock.place(relx=0.01, rely=0.03, relwidth=1 - 0.02, relheight=0.065)
+                     font=font_medium_bold)
+GUI_Clock.place(relx=0, rely=0.03, relwidth=1, relheight=(1/12))
 # # -- Column of buttons
-GUI_ReactorButtons = [0] * no_reactors
-for i in rng:
+GUI_ReactorButtons = [0] * 6
+for i in range(6):
     GUI_ReactorButtons[i] = tk.Button(GUI_Selection_Area,
                                       text=Reactor.Name[i],
                                       bg=RGB_LeftBar_LightBlue,
                                       font=font_medium,
                                       command=partial(_ChangeReactor, i))
-    GUI_ReactorButtons[i].place(relx=0, rely=(4+i)*(1/15),
-                                relwidth=1, relheight=1/15)
-# GUI_ReactorButtons[selReact].configure(bg=RGB_LeftBar_MidBlue, relief='sunken')
+    GUI_ReactorButtons[i].place(relx=0, rely=(3+i)*(1/16),
+                                relwidth=1, relheight=1/16)
 # --------------------------------------------------------------
 
 
@@ -855,31 +840,32 @@ GUI_Display_Area.place(relx=0.2, rely=0,
 
 # ------- Reactor frame --------------
 GUI_Reactor_Frame = tk.Frame(GUI_Display_Area,
-                             bg='white', bd=2, padx=5, pady=5,
+                             bg='black', bd=2, padx=2, pady=2,
                              relief='solid')
 GUI_Reactor_Frame.place(relx=0.0, rely=0.025,
                         relwidth=1, relheight=0.4)
 
-
 GUI_Reactor_Name = tk.Label(GUI_Reactor_Frame, text='Name',
-                            bg='white', fg='black',
+                            bg='white', fg='black',bd=2,
+                            relief='solid',
                             font=font_medium, anchor='w')
 GUI_Reactor_Name.place(relx=0.0, rely=0.0,
-                       relwidth=1, relheight=0.1)
+                       relwidth=1, relheight=0.12)
 
-GUI_Enable_Buttone = tk.Button(GUI_Reactor_Frame, text='EN/DIS',
-                               bg='light blue', bd=1,
+GUI_Enable_Button = tk.Button(GUI_Reactor_Frame, text='EN/DIS',
+                               bg='light blue', bd=2,
+                               relief='solid',
                                font=font_medium, command=_EnableClick)
-GUI_Enable_Buttone.place(relx=0.8, rely=0.0,
-                         relwidth=0.2, relheight=0.1)
+GUI_Enable_Button.place(relx=0.8, rely=0.0,
+                         relwidth=0.2, relheight=0.12)
 
 # ------- TEMPERATURE FRAME -----------------------------
 # Frame
 GUI_Temperature_Frame = tk.Frame(GUI_Reactor_Frame,
-                                 bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
+                                 bg=RGB_Sections_bg, bd=1, padx=5, pady=5,
                                  relief='solid')
-GUI_Temperature_Frame.place(relx=0, rely=0.1,
-                            relwidth=1 / 3, relheight=0.9)
+GUI_Temperature_Frame.place(relx=0, rely=0.12,
+                            relwidth=1 / 3, relheight=0.88)
 # Temperature label
 GUI_TempLabel = tk.Label(GUI_Temperature_Frame, text='Temperature',
                          bg=RGB_Temperature_title, fg='white',
@@ -889,7 +875,7 @@ GUI_TempLabel.place(relx=0, rely=0,
 # Target temp. label
 GUI_TargetTemp_Label = tk.Label(GUI_Temperature_Frame, text='Target',
                                 bg=RGB_Sections_bg, fg='black',
-                                font=font_small_bold, anchor='w', relief='groove')
+                                font=font_small_bold, anchor='w')
 GUI_TargetTemp_Label.place(relx=0, rely=0.15,
                            relwidth=0.5, relheight=0.15)
 # Target temp. value
@@ -901,27 +887,27 @@ GUI_TargetTemp_Value.place(relx=0, rely=0.3,
 # Actual temp. label
 GUI_ActualTemp_Label = tk.Label(GUI_Temperature_Frame, text='Actual',
                                 bg=RGB_Sections_bg, fg='black',
-                                font=font_small_bold, anchor='w', relief='groove')
+                                font=font_small_bold, anchor='w')
 GUI_ActualTemp_Label.place(relx=0.5, rely=0.15,
                            relwidth=0.5, relheight=0.15)
 GUI_ActualTemp_Value = tk.Label(GUI_Temperature_Frame, text='x °C',
                                 bg=RGB_Sections_bg, fg=RGB_Temperature_title,
-                                font=font_big, anchor='w', relief='groove')
+                                font=font_big, anchor='w')
 GUI_ActualTemp_Value.place(relx=0.5, rely=0.3,
                            relwidth=0.5, relheight=0.25)
 # Heater power level
 GUI_HeaterPower_Label = tk.Label(GUI_Temperature_Frame, text='Heating...',
                                  bg='white', fg='red', borderwidth=2,
-                                 font=font_small, relief='groove',)
-GUI_HeaterPower_Label.place(relx=0.45, rely=0.6, relwidth=0.5, relheight=0.15)
+                                 font=font_small, relief='solid',)
+GUI_HeaterPower_Label.place(relx=0.5, rely=0.7, relwidth=0.5, relheight=0.15)
 # Heater temperature sensor
 GUI_HeaterTemp_Label = tk.Label(GUI_Temperature_Frame, text='Heater x°C',
                                 bg=RGB_Sections_bg, fg='black',
-                                font=font_small, anchor='w', relief='groove')
-GUI_HeaterTemp_Label.place(relx=0.45, rely=0.85, relwidth=0.5, relheight=0.1)
+                                font=font_small, anchor='w')
+GUI_HeaterTemp_Label.place(relx=0.5, rely=0.85, relwidth=0.5, relheight=0.1)
 # PID button
 GUI_Pid_Button = tk.Button(GUI_Temperature_Frame, text='PID',
-                           bg=RGB_Graph_b2,
+                           bg=RGB_Graph_b1,
                            font=font_small, command=_PIDWindow)
 GUI_Pid_Button.place(relx=0.01, rely=1 - 0.15, relwidth=0.2, relheight=0.14)
 
@@ -930,8 +916,8 @@ GUI_Pid_Button.place(relx=0.01, rely=1 - 0.15, relwidth=0.2, relheight=0.14)
 GUI_Stirring_Frame = tk.Frame(GUI_Reactor_Frame,
                               bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
                               relief='solid')
-GUI_Stirring_Frame.place(relx=1/3, rely=0.1,
-                         relwidth=1 / 3, relheight=0.9)
+GUI_Stirring_Frame.place(relx=1/3, rely=0.12,
+                         relwidth=1 / 3, relheight=0.88)
 # Stirring Label
 GUI_Stirr_Label = tk.Label(GUI_Stirring_Frame, text='Stirring',
                            bg=RGB_Stirring_title, fg='white',
@@ -941,12 +927,12 @@ GUI_Stirr_Label.place(relx=0, rely=0,
 # Duration label
 GUI_Duration_Label = tk.Label(GUI_Stirring_Frame, text='Inteval duration (min)',
                               bg=RGB_Sections_bg, fg='black',
-                              font=font_small_bold, anchor='w', relief='groove')
+                              font=font_small_bold, anchor='w')
 GUI_Duration_Label.place(relx=0, rely=0.15, relwidth=0.5, relheight=0.15)
 # On time label
 GUI_On_Label = tk.Label(GUI_Stirring_Frame, text='ON ',
                         bg=RGB_Sections_bg, fg='black',
-                        font=font_small, anchor='e', relief='groove')
+                        font=font_small, anchor='e')
 GUI_On_Label.place(relx=0, rely=0.3, relwidth=0.2, relheight=0.15)
 # On time Value
 GUI_On_Value = tk.Spinbox(GUI_Stirring_Frame, from_=1, to=60,
@@ -956,7 +942,7 @@ GUI_On_Value.place(relx=0.2, rely=0.3, relwidth=0.2, relheight=0.15)
 # Off time label
 GUI_Off_Label = tk.Label(GUI_Stirring_Frame, text='OFF ',
                          bg=RGB_Sections_bg, fg='black',
-                         font=font_small, anchor='e', relief='groove')
+                         font=font_small, anchor='e')
 GUI_Off_Label.place(relx=0, rely=0.5, relwidth=0.2, relheight=0.15)
 # Off time Value
 GUI_Off_Value = tk.Spinbox(GUI_Stirring_Frame, from_=1, to=60,
@@ -966,7 +952,7 @@ GUI_Off_Value.place(relx=0.2, rely=0.5, relwidth=0.2, relheight=0.15)
 #  Stirring Label
 GUI_Rpm_Label = tk.Label(GUI_Stirring_Frame, text='RPM ',
                          bg=RGB_Sections_bg,
-                         font=font_small, anchor='e', relief='groove')
+                         font=font_small, anchor='e')
 GUI_Rpm_Label.place(relx=0.5, rely=0.3, relwidth=0.2, relheight=0.15)
 # RPM Spinbox
 GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(30, 60, 120),
@@ -975,13 +961,12 @@ GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(30, 60, 120),
 GUI_Rpm_Value.place(relx=0.7, rely=0.3, relwidth=0.2, relheight=0.15)
 # Stirring State
 GUI_StirrState_Label = tk.Label(GUI_Stirring_Frame, text='ON/OFF',
-                                bg=RGB_Stirring_ON,
-                                font=font_medium, relief='groove')
+                                font=font_medium, relief='solid')
 GUI_StirrState_Label.place(relx=0.25, rely=0.7, relwidth=0.55, relheight=0.2)
 # Time counter
 GUI_StirrTime_Label = tk.Label(GUI_Stirring_Frame, text='Time: 00.00.00',
                                bg=RGB_Sections_bg,
-                               font=font_small, anchor='nw', relief='groove')
+                               font=font_small, anchor='nw')
 GUI_StirrTime_Label.place(relx=0.6, rely=0.9, relwidth=0.4, relheight=0.1)
 #
 
@@ -990,8 +975,8 @@ GUI_StirrTime_Label.place(relx=0.6, rely=0.9, relwidth=0.4, relheight=0.1)
 GUI_FeedMat_Frame = tk.Frame(GUI_Reactor_Frame,
                              bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
                              relief='solid')
-GUI_FeedMat_Frame.place(relx=2/3, rely=0.1,
-                        relwidth=1 / 3, relheight=0.9)
+GUI_FeedMat_Frame.place(relx=2/3, rely=0.12,
+                        relwidth=1 / 3, relheight=0.88)
 
 # Feed material Label
 GUI_FeedMat_Label = tk.Label(GUI_FeedMat_Frame, text='Feeding Material',
@@ -1002,7 +987,7 @@ GUI_FeedMat_Label.place(relx=0, rely=0,
 # Amount label
 GUI_Qty_Label = tk.Label(GUI_FeedMat_Frame, text='Qty',
                          bg=RGB_Sections_bg,  fg='black',
-                         font=font_small_bold, anchor='w', relief='groove')
+                         font=font_small_bold, anchor='w')
 GUI_Qty_Label.place(relx=0.1, rely=0.2,
                     relwidth=0.15, relheight=0.15)
 # Amount  value
@@ -1012,7 +997,7 @@ GUI_Qty_value.place(relx=0.1, rely=0.35,
 # Unit label
 GUI_Unit_Label = tk.Label(GUI_FeedMat_Frame, text='Unit',
                           bg=RGB_Sections_bg, fg='black',
-                          font=font_small_bold, anchor='w', relief='groove')
+                          font=font_small_bold, anchor='w')
 GUI_Unit_Label.place(relx=0.27, rely=0.2,
                      relwidth=0.2, relheight=0.15)
 # Unit value
@@ -1022,7 +1007,7 @@ GUI_Unit_value.place(relx=0.27, rely=0.35,
 # # - Feed material
 GUI_Material_Label = tk.Label(GUI_FeedMat_Frame, text='Material',
                               fg='black', bg=RGB_Sections_bg,
-                              font=font_small_bold, anchor='w', relief='groove')
+                              font=font_small_bold, anchor='w')
 GUI_Material_Label.place(relx=0.48, rely=0.2,
                          relwidth=0.4, relheight=0.15)
 GUI_Material_value = tk.Entry(GUI_FeedMat_Frame, font=font_small)
@@ -1051,25 +1036,25 @@ graph.get_tk_widget().place(relx=0, rely=0.05,
                             relwidth=0.9, relheight=0.95)
 # Hour button
 GUI_24HourButton = tk.Button(GUI_Graph_Frame, text='DAY',
-                             bg=RGB_Graph_b1, font=font_medium,
+                             bg=RGB_Graph_b1,font=font_medium,
                              command=partial(UpdatePlot, days=1, ax=ax))
 GUI_24HourButton.place(relx=1 - 0.15, rely=1 * (1 / 6),
                        relwidth=0.15, relheight=(1 / 6))
 # Week button
 GUI_WeekButton = tk.Button(GUI_Graph_Frame, text='Week',
-                           bg=RGB_Graph_b2, font=font_medium,
+                           bg=RGB_Graph_b1, font=font_medium,
                            command=partial(UpdatePlot, days=7, ax=ax))
 GUI_WeekButton.place(relx=1 - 0.15, rely=2 * (1 / 6),
                      relwidth=0.15, relheight=(1 / 6))
 # Month button
 GUI_MonthButton = tk.Button(GUI_Graph_Frame, text='Month',
-                            bg=RGB_Graph_b2, font=font_medium,
+                            bg=RGB_Graph_b1, font=font_medium,
                             command=partial(UpdatePlot, days=32, ax=ax))
 GUI_MonthButton.place(relx=1 - 0.15, rely=3 * (1 / 6),
                       relwidth=0.15, relheight=(1 / 6))
 #  Update button
 GUI_UpdateButton = tk.Button(GUI_Graph_Frame, text='Update plot',
-                             bg=RGB_Graph_b2,
+                             bg=RGB_Graph_b1,
                              font=font_medium,
                              command=partial(UpdatePlot, days=0, ax=ax))
 GUI_UpdateButton.place(relx=1 - 0.15, rely=5 * (1 / 6),
@@ -1085,15 +1070,14 @@ GUI_Status_Bar.place(relx=0, rely=1 - 0.04,
 # Serial port
 GUI_SerialPortLabel = tk.Label(GUI_Status_Bar, text='PORT ',
                                bg='GRAY72', bd=1, padx=0, pady=0,
-                               font=font_small, anchor='w', relief='solid')
+                               font=font_small, anchor='w', relief='groove')
 GUI_SerialPortLabel.place(relx=0, rely=0, relwidth=0.3, relheight=1)
 # Serial port selection
 GUI_SerialPortValue = tk.Spinbox(GUI_SerialPortLabel, values=serial_ports,
                                  bg='white', wrap=True,
                                  font=font_small, command=_SerialPortChange)
 GUI_SerialPortValue.place(relx=0.15, rely=0, relwidth=0.4, relheight=1)
-GUI_SerialPortValue.delete(0, "end")
-GUI_SerialPortValue.insert(0, com)
+
 #  Connection state
 GUI_StateInfo = tk.Label(GUI_SerialPortLabel, text='connection?',
                          bg='GRAY72',
@@ -1102,17 +1086,19 @@ GUI_StateInfo.place(relx=0.55, rely=0, relwidth=0.45, relheight=1)
 # Thermal protection state
 GUI_OverheatLabel = tk.Label(GUI_Status_Bar, text='Therm. protect:',
                              bg='GRAY72',
-                             font=font_small, anchor='w', relief='solid')
+                             font=font_small, anchor='w', relief='groove')
 GUI_OverheatLabel.place(relx=0.45, rely=0,
                         relwidth=0.55, relheight=1)
-GUI_ErrorInfo = [0] * no_reactors
-for i in rng:
+GUI_ErrorInfo = [0] * 6
+for i in range(6):
     GUI_ErrorInfo[i] = tk.Label(GUI_OverheatLabel,
                                 text='{} {}'.format('Reactor ', i + 1),
                                 font=font_small, relief='groove')
     GUI_ErrorInfo[i].place(relx=(3 / 15) + (i * 2 / 15),
                            rely=0, relwidth=(2 / 15), relheight=1)
-# # -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+# ==== GUI SECTION (END)=======================================================
+
 
 
 # ---- Object and Timer initialization ----------
@@ -1127,7 +1113,6 @@ GUI_Main_Window.mainloop()
 
 
 # ---- Code before finishing the apllication ----------------
-
 # TURN HEATERS OFF
 # code
 # code
