@@ -1,6 +1,6 @@
 # !/usr/bin/python3
 from simple_pid import PID
-import Panda_funct as Panda
+import PandaFunct as Panda
 import ArdFunct as ard
 import CsvFunct as CSV
 import matplotlib.pyplot as plt
@@ -137,7 +137,6 @@ def StirrOnOff():
             # update the time when the state changed to the current time
             Reactor.StateTime[i] = datetime.now()
 
-    print(Reactor.RPM)
     # Update configuration control of stirring motors
     ard.StepperMotorReconfig(A, Reactor.RPM,
                              Reactor.StirrState,
@@ -544,7 +543,7 @@ def _FeedMaterial():
     Material = GUI_Material_value.get()
 
     # if all the elements are filled in , then the feed material is going to be saved
-    if (Amount is not '' and Unit is not '' and Material is not ''):
+    if (Amount != '') and (Unit != '') and (Material != ''):
 
         # -- LOG Feed Material ----------------------------------------------------
         # Get pat of Feerinf material CSV file
@@ -586,8 +585,7 @@ def _FeedMaterial():
 
 
 def _PIDWindow():
-    print('PID CONFIG')
-    print(' ')
+    print('PID configuration')
 
     top = tk.Toplevel()
 
