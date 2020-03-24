@@ -55,7 +55,6 @@ def ArdConnect(com):
     except Exception:
         print('-->! Arduino is not connected')
         run = False  # indicate that arduino connection could not be done
-        print('run is', run)
         return False  # return a 'False' value
 # -----------------------------------------------------------------------------
 

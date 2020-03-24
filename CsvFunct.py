@@ -35,7 +35,7 @@ FeedingMaterialName = [""] * 6
 # in the csv Setup file
 def setup_set(f='', SP=[35] * 6, TimeOn=[10] * 6, TimeOff=[5] * 6,
               RPM=[30] * 6, Kp=[1] * 6, Ki=[2] * 6, Kd=[3] * 6,
-                Enable=[1, 0, 0, 0, 0, 0], COM='COM15'):
+                Enable=[1, 0, 0, 0, 0, 0], COM='--'):
 
     data = [[''] * 6] * 15  # Data to be written in the file
 
@@ -194,6 +194,3 @@ def CSV_file_create():
 CSV_file_create()
 # Get last configuration status
 setup_get(SetupFile)
-
-
-print(TimeOn)
