@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timedelta
 from functools import partial
 from threading import Timer
-from PIL import ImageTk, Image
+from PIL import Image, ImageTk
 import tkinter as tk
 # from tkinter import (Tk, Frame, Button, Entry, Canvas, Label,
 # Spinbox, messagebox, Toplevel)
@@ -137,8 +137,12 @@ def StirrOnOff():
             # update the time when the state changed to the current time
             Reactor.StateTime[i] = datetime.now()
 
-        # Update configuration control of stirring motors
-        ard.StepperMotorReconfig(A, Reactor.RPM, Reactor.StirrState, Reactor.OP)
+    print(Reactor.RPM)
+    # Update configuration control of stirring motors
+    ard.StepperMotorReconfig(A, Reactor.RPM,
+                             Reactor.StirrState,
+                             Reactor.Enable,
+                             Reactor.OP)
 
     # --- Loop this function on a timer threading ----
     StirrOnOffTimer = Timer(1, StirrOnOff)
@@ -165,8 +169,9 @@ def GuiOutputUpdate():
 
     # Reactor buttons
     for i in range(6):
-        GUI_ReactorButtons[i].configure(bg=RGB_LeftBar_LightBlue,
-                                        relief='raised')
+        if i is not r:
+            GUI_ReactorButtons[i].configure(bg=RGB_LeftBar_LightBlue,
+                                            relief='raised')
     GUI_ReactorButtons[r].configure(bg=RGB_LeftBar_MidBlue, relief='sunken')
     # ------------------------------------
 
@@ -209,8 +214,7 @@ def GuiOutputUpdate():
     # ------------------------------------
 
     # --- Bottom state bar ---------------
-    # Arduino connection State
-    if ard.run is True:
+    if A is not False:
         GUI_StateInfo.configure(text='Connected', fg='green4')
     else:
         GUI_StateInfo.configure(text='Connecting', fg='red')
@@ -293,11 +297,10 @@ def UpdateStatus():
                 (Reactor.OP[i] > 10)):
             Reactor.ThermalProtect[i] = True  # thermal protect activated
             Reactor.Enable[i] = False  # reactor is disabled
+            GuiOutputUpdate()
             msg = 'Heater from Reactor{} is not working'.format(i+1)
-            messagebox.showwarning('Thermal protection', msg)
+            tk.messagebox.showwarning('Thermal protection', msg)
             print(msg)
-        else:
-            print('Heater', i+1, 'is working')
 
     # --------------------------------------------------------------------------
 
@@ -314,7 +317,7 @@ def UpdateStatus():
 
     Reactor.prevTemp = Reactor.PV  # Save the last temperture(used for thermal protection)
 
-    UpdateStatusTimer = Timer(10, UpdateStatus)
+    UpdateStatusTimer = Timer(5, UpdateStatus)
     UpdateStatusTimer.daemon = True
     UpdateStatusTimer.start()
 # ------------------------------------------------------------
@@ -415,7 +418,7 @@ def DataLogger():
                         i], v2=Reactor.TimeOn[i], v3=Reactor.TimeOff[i])
                 # -----------------------------------------------------------
 
-    MinuteLoopTimer = Timer(10, DataLogger)  # Save data every 30 mins
+    MinuteLoopTimer = Timer(30*60, DataLogger)  # Save data every 30 mins
     MinuteLoopTimer.daemon = True
     MinuteLoopTimer.start()  # Restart Timer
 # ------------------------------------------------------------
@@ -447,7 +450,6 @@ def PIDfunct():
     op = [0] * 6
 
     if Reactor.Enable[0] and ard.run is True:
-        print('Controlling')
         op[0] = pid1(Reactor.PV[0])
     if Reactor.Enable[1]and ard.run is True:
         op[1] = pid2(Reactor.PV[1])
@@ -505,15 +507,14 @@ def _spinOff():
 
 def _spinRPM():
 
-    Reactor.RPM[selReact] = GUI_Rpm_Value.get()
+    Reactor.RPM[selReact] = int(GUI_Rpm_Value.get())
     print('Reactor', selReact + 1, 'changed to', Reactor.RPM[selReact], 'RPMs')
 
 
 def _SerialPortChange():
-    global com
+    global com, A
     com = GUI_SerialPortValue.get()
     print('Serial Port changed')
-
     return True
 
 # When the Enable/Disable button is pressed
@@ -575,9 +576,9 @@ def _FeedMaterial():
         # --------------------------------------------------------------------------
 
         # Display confirmation message and clear feed material objects
-        messagebox.showinfo(title='Feeding material', message='Feed material entered')
+        tk.messagebox.showinfo(title='Feeding material', message='Feed material entered')
     else:
-        messagebox.showerror(title='Feeding material', message='The information is not complete')
+        tk.messagebox.showerror(title='Feeding material', message='The information is not complete')
     GUI_Qty_value.delete(0, 'end')
     GUI_Unit_value.delete(0, 'end')
     GUI_Material_value.delete(0, 'end')
@@ -588,47 +589,47 @@ def _PIDWindow():
     print('PID CONFIG')
     print(' ')
 
-    top = Toplevel()
+    top = tk.Toplevel()
 
     top.title('PID Parameters Reactor ' + str(selReact + 1))
     top.geometry('{}x{}+{}+{}'.format(int(w/2), int(h/1.4), GUI_Main_Window.winfo_x() + int(w / 2),
                                       GUI_Main_Window.winfo_y() + int(h/2)))
 
-    label = Label(top, text='PID \n TUNNING PARAMETERS', bg='DarkBlue', fg='white', font=('Calibri', 15),
-                  justify='center', bd='2')
+    label = tk.Label(top, text='PID \n TUNNING PARAMETERS', bg='DarkBlue', fg='white', font=('Calibri', 15),
+                     justify='center', bd='2')
     label.place(relx=0.115, rely=0.1, relwidth=0.81, relheight=0.2)
 
-    GUI_Pid_ButtonFrame = Frame(top, bg='black', bd=2)
+    GUI_Pid_ButtonFrame = tk.Frame(top, bg='black', bd=2)
     GUI_Pid_ButtonFrame.place(relx=0.115, rely=0.32, relwidth=0.397, relheight=0.3)
 
-    GUI_Pid_ButtonFrame1 = Frame(top, bg='black', bd=2)
+    GUI_Pid_ButtonFrame1 = tk.Frame(top, bg='black', bd=2)
     GUI_Pid_ButtonFrame1.place(relx=0.53, rely=0.32, relwidth=0.397, relheight=0.3)
 
-    img = Imagetk.PhotoImage(Image.open('pid.jpg'))
-    panel = Label(GUI_Pid_ButtonFrame1, image=img)
+    img = ImageTk.PhotoImage(Image.open('pid.jpg'))
+    panel = tk.Label(GUI_Pid_ButtonFrame1, image=img)
     panel.pack(side='bottom', fill='both')
 
-    GUI_Pid_ButtonFrame2 = Frame(top, bg='black', bd=2)
+    GUI_Pid_ButtonFrame2 = tk.Frame(top, bg='black', bd=2)
     GUI_Pid_ButtonFrame2.place(relx=0.115, rely=0.65, relwidth=0.81, relheight=0.3)
 
     # P value
-    label1 = Label(GUI_Pid_ButtonFrame, text='Kp', bg='grey')
+    label1 = tk.Label(GUI_Pid_ButtonFrame, text='Kp', bg='grey')
     label1.place(relx=0.05, rely=0.1, relwidth=0.2, relheight=0.2)
-    PID_PValue = Entry(GUI_Pid_ButtonFrame, fg='green')
+    PID_PValue = tk.Entry(GUI_Pid_ButtonFrame, fg='green')
     PID_PValue.place(relx=0.29, rely=0.1, relwidth=0.45, relheight=0.2)
     PID_PValue.insert(0, Reactor.Kp[selReact])
 
     # I value
-    label2 = Label(GUI_Pid_ButtonFrame, text='Ki', bg='grey')
+    label2 = tk.Label(GUI_Pid_ButtonFrame, text='Ki', bg='grey')
     label2.place(relx=0.05, rely=0.35, relwidth=0.2, relheight=0.2)
-    PID_IValue = Entry(GUI_Pid_ButtonFrame, fg='green')
+    PID_IValue = tk.Entry(GUI_Pid_ButtonFrame, fg='green')
     PID_IValue.place(relx=0.29, rely=0.35, relwidth=0.45, relheight=0.2)
     PID_IValue.insert(0, Reactor.Ki[selReact])
 
     # D value
-    label3 = Label(GUI_Pid_ButtonFrame, text='Kd', bg='grey')
+    label3 = tk.Label(GUI_Pid_ButtonFrame, text='Kd', bg='grey')
     label3.place(relx=0.05, rely=0.6, relwidth=0.2, relheight=0.2)
-    PID_DValue = Entry(GUI_Pid_ButtonFrame, text=Reactor.Kd[selReact], fg='green')
+    PID_DValue = tk.Entry(GUI_Pid_ButtonFrame, text=Reactor.Kd[selReact], fg='green')
     PID_DValue.insert(0, Reactor.Kd[selReact])
     PID_DValue.place(relx=0.29, rely=0.6, relwidth=0.45, relheight=0.2)
 
@@ -641,7 +642,7 @@ def _PIDWindow():
         top.update()
 
     # Enter button
-    PID_EnterButton = Button(GUI_Pid_ButtonFrame, text='Enter', command=enter_btn)
+    PID_EnterButton = tk.Button(GUI_Pid_ButtonFrame, text='Enter', command=enter_btn)
     PID_EnterButton.pack(side='right')
 
     figure1 = plt.Figure(figsize=(5, 2), dpi=80)
@@ -803,7 +804,7 @@ GUI_Main_Window.title('CSRT Reactors control')
 # GUI_Main_Window.iconbitmap()
 
 # Main window size and zoom
-z = 1   # Main window zoom
+z = 0.85   # Main window zoom(from screen size)
 w = int(sw * z) - 70  # width for the Tk root
 h = int(sh * z) - 70  # height for the Tk root
 zl = 1.5 * z  # Font zoom
@@ -820,10 +821,9 @@ font_big = (font_name, int(32 * zl))  # big
 x = (sw / 2) - (w / 2)
 y = (sh / 2) - (h / 2)
 # Configurate size and position of Main window
-# GUI_Main_Window.geometry('%dx%d+%d+%d' % (w, h, x, 0))
-# GUI_Main_Window.configure(bg='RED')
+GUI_Main_Window.geometry('%dx%d+%d+%d' % (w, h, x, 0))
 GUI_Main_Window.resizable(0, 0)
-GUI_Main_Window.state('zoomed')
+# GUI_Main_Window.state('zoomed')
 
 
 # ----- Left section of GUI  -------------------------------
@@ -845,7 +845,7 @@ for i in rng:
                                       command=partial(_ChangeReactor, i))
     GUI_ReactorButtons[i].place(relx=0, rely=(4+i)*(1/15),
                                 relwidth=1, relheight=1/15)
-#GUI_ReactorButtons[selReact].configure(bg=RGB_LeftBar_MidBlue, relief='sunken')
+# GUI_ReactorButtons[selReact].configure(bg=RGB_LeftBar_MidBlue, relief='sunken')
 # --------------------------------------------------------------
 
 
@@ -952,7 +952,8 @@ GUI_On_Label = tk.Label(GUI_Stirring_Frame, text='ON ',
 GUI_On_Label.place(relx=0, rely=0.3, relwidth=0.2, relheight=0.15)
 # On time Value
 GUI_On_Value = tk.Spinbox(GUI_Stirring_Frame, from_=1, to=60,
-                          font=font_small, relief='solid')
+                          font=font_small, state='readonly', relief='solid',
+                          command=_spinOn)
 GUI_On_Value.place(relx=0.2, rely=0.3, relwidth=0.2, relheight=0.15)
 # Off time label
 GUI_Off_Label = tk.Label(GUI_Stirring_Frame, text='OFF ',
@@ -970,7 +971,7 @@ GUI_Rpm_Label = tk.Label(GUI_Stirring_Frame, text='RPM ',
                          font=font_small, anchor='e', relief='groove')
 GUI_Rpm_Label.place(relx=0.5, rely=0.3, relwidth=0.2, relheight=0.15)
 # RPM Spinbox
-GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(10, 20, 60),
+GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(30, 60, 120),
                            font=font_small, state='readonly', relief='solid',
                            command=_spinRPM)
 GUI_Rpm_Value.place(relx=0.7, rely=0.3, relwidth=0.2, relheight=0.15)
@@ -1093,6 +1094,8 @@ GUI_SerialPortValue = tk.Spinbox(GUI_SerialPortLabel, values=serial_ports,
                                  bg='white', wrap=True,
                                  font=font_small, command=_SerialPortChange)
 GUI_SerialPortValue.place(relx=0.15, rely=0, relwidth=0.4, relheight=1)
+GUI_SerialPortValue.delete(0, "end")
+GUI_SerialPortValue.insert(0, com)
 #  Connection state
 GUI_StateInfo = tk.Label(GUI_SerialPortLabel, text='connection?',
                          bg='GRAY72',
@@ -1125,31 +1128,24 @@ GUI_Main_Window.mainloop()
 # ------------------------------------------------
 
 
-# ---- CODE TO 'end' THE APPLICATION -------------------
+# ---- Code before finishing the apllication ----------------
 
-# TURN MOTORS AND HEATERS OFF
+# TURN HEATERS OFF
+# code
+# code
 
 # CSV changes in Setup csv file
-for i in rng:
-    CSV.SP[i] = Reactor.SP[i]
-    CSV.TimeOn[i] = Reactor.TimeOn[i]
-    CSV.TimeOff[i] = Reactor.TimeOff[i]
-    CSV.RPM[i] = Reactor.RPM[i]
-    CSV.Kp[i] = Reactor.Kp[i]
-    CSV.Ki[i] = Reactor.Ki[i]
-    CSV.Kd[i] = Reactor.Kd[i]
-    CSV.Enable[i] = Reactor.Enable[i]
 CSV.setup_set(f=CSV.SetupFile,
-              SP=CSV.SP,
-              TimeOn=CSV.TimeOn,
-              TimeOff=CSV.TimeOff,
-              RPM=CSV.RPM,
-              Kp=CSV.Kp,
-              Ki=CSV.Ki,
-              Kd=CSV.Kd,
+              SP=Reactor.SP,
+              TimeOn=Reactor.TimeOn,
+              TimeOff=Reactor.TimeOff,
+              RPM=Reactor.RPM,
+              Kp=Reactor.Kp,
+              Ki=Reactor.Ki,
+              Kd=Reactor.Kd,
               COM=com,
-              Enable=CSV.Enable)
-# End python programm
-print('APP CLOSED')
+              Enable=Reactor.Enable)
+
+print('APP Finished')
 sys.exit()
 # --------------------------------------------------------

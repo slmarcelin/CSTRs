@@ -194,3 +194,6 @@ def CSV_file_create():
 CSV_file_create()
 # Get last configuration status
 setup_get(SetupFile)
+
+
+print(TimeOn)

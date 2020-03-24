@@ -1,9 +1,11 @@
+#
+# This test includes the AccelStepper library from arduino to manipulate multuple
+# steppers at same time
 
-from nanpy import ArduinoApi, SerialManager, Stepper  # https://pypi.org/project/nanpy/
+from nanpy import ArduinoApi, SerialManager, AccelStepper   # https://pypi.org/project/nanpy/
 from threading import Timer  # https://docs.python.org/3/library/threading.html
 import time
 import math
-from datetime import datetime
 
 
 # ------ Arduino Pins & variables ------
@@ -13,20 +15,19 @@ HeaterTemp_Pin_In = [1, 1, 1, 1, 1, 1]  # Heater temp. sensor(Analog inputs)
 ReactorTemp_Pin_In = [2, 2, 2, 2, 2, 2]  # Reactor temp. sensor(Analog inputs)
 
 # -- Stepper motor pins
-sMotor = [0]*6  # List of the stepper motors
-DIR_n = [4, 22, 24, 25, 26, 27]  # DIR-
-DIR_p = [5, 28, 30, 31, 32, 33]  # DIR+
-PUL_n = [6, 34, 36, 27, 38, 39]  # PUL-
-PUL_p = [7, 30, 32, 33, 34, 35]  # PUL+
+DIR_n_pin = [4, 22, 24, 25, 26, 27]  # DIR-
+DIR_p_pin = [5, 28, 30, 31, 32, 33]  # DIR+
+PUL_n_pin = [6, 34, 36, 27, 38, 39]  # PUL-
+PUL_p_pin = [7, 30, 32, 33, 34, 35]  # PUL+
+StepsPerRev = 200  # steps to do a rev
+stepperMotor = [0]*6  # List of the stepper motors
+stepperMotor_RPM = [1]*6  # motor RPMs(manipulated by GUI)
+stepperMotor_ON = [False]*6  # Enable of the motor(manipulated by program)
 #  ------------------------------------------
 
-#
-sMotor_RPM = [0]*6  # Variable used to store the RPMs(manipulated by GUI)
-sMotor_Enable = [True]*6  # Variable used to enable/Disable the steppers(manipulated by program)
 stirrTimer = 0  # Timer to call MotorControlling()
 # ---- Speed CONSTANTS
-RPM_60 = 480  # speed of 480 to go 60 RPM
-StepsPerRev = 1600  # steps to do a rev
+
 # ----------------
 led = 13  # LED in arduino(Used to validate connection)
 noReactors = 6  # Number of reactors Used
@@ -54,6 +55,7 @@ def ArdConnect(com):
     except Exception:
         print('-->! Arduino is not connected')
         run = False  # indicate that arduino connection could not be done
+        print('run is', run)
         return False  # return a 'False' value
 # -----------------------------------------------------------------------------
 
@@ -69,6 +71,7 @@ def checkConnection(ard):
         ArdMillis = ard.millis()
         run = True  # indicate that Arduino is performing properly
         return run
+
     except Exception:
         run = False  # indicate that something went wrong
         return run
@@ -79,7 +82,7 @@ def checkConnection(ard):
 # The outputs, inputs and other configuration settings are done
 # Arguments: ard --> An 'ArduinoApi' object for communication
 def ArdSetup(ard):
-    global run, sMotor, PRM
+    global run, stepperMotor, PRM
 
     try:
         # --- Definition of output and input Arduino pins ---
@@ -89,17 +92,20 @@ def ArdSetup(ard):
             ard.pinMode(Heater_Pin_Out[i], ard.OUTPUT)  # Heater power
 
             # Stepper motors
-            sMotor[i] = Stepper(revsteps=200,
-                                pin1=DIR_n[i],
-                                pin2=DIR_p[i],
-                                pin3=PUL_n[i],
-                                pin4=PUL_p[i],
-                                connection=ard.connection)
+            stepperMotor[i] = AccelStepper(interface=4,
+                                           pin1=DIR_n_pin[i],
+                                           pin2=DIR_p_pin[i],
+                                           pin3=PUL_n_pin[i],
+                                           pin4=PUL_p_pin[i],
+                                           connection=ard.connection)
+            time.sleep(1)  # wait to crete stepper objects
+            stepperMotor[i].setMaxSpeed(800)
+
         # --------------------------------------------------
 
         # Function to control the stepper motors
-        # MotorControlling(ard)  # (this function runs on a different
-        # threading on a loop with a timer)
+        MotorControlling(ard)  # (this function runs on a different
+        #  threading on a loop with a timer)
 
         print('--> Arduino setup')
         run = True  # Indicate that the setup is done
@@ -114,18 +120,34 @@ def ArdSetup(ard):
 # Modify variables that are used to control the stepper motors
 # Arguments:    ard -> An 'ArduinoApi' object for communication
 #               rpm -> list with the speed of the motors (modified from GUI)
-#               en -> list with the enable status from every reactor
+#               status -> List with the status of the motors(ON/OFF)
+#               enable -> list with the enable status from every reactor
 #               op -> list with the power of the heater
-def StepperMotorReconfig(ard, rpm, en, op):
-    global sMotor_Enable, sMotor_RPM
+def StepperMotorReconfig(ard, rpm, status, enable, op):
+    global stepperMotor_ON, stepperMotor_RPM, StepsPerRev
 
-    if checkConnection(ard):
+    if checkConnection(ard):    # If arduino is connected,...
 
-        sMotor_RPM = rpm    # Update RPMs for stepper motors
+        for i in range(len(rpm)):  # repeat for every reactor
 
-        # enable movement if Reactor is enabled or heater power is ^50%
-        for i in range(len(en)):
-            sMotor_Enable[i] = en[i] or (op[i] > 50)
+            # Update RPMs for stepper motors----
+            if stepperMotor_RPM != rpm:
+
+                stepperMotor_RPM[i] = rpm[i]  # stepper RPM variable
+
+                if isinstance(stepperMotor[i], AccelStepper):
+                    stepsPerSecond = (stepperMotor_RPM[i]/60) * StepsPerRev
+                    stepperMotor[i].setSpeed(stepsPerSecond)
+                # Note: setSpeed receives steps per seconds as argument
+            # -------------------------------------
+
+            # We move the motor if: - Reactor is Enabled AND
+            #                       - (Reactor status is ON or
+            #                          heater power is ^50%)
+            if enable[i] and ((status[i] is True) or (op[i] > 50)):
+                stepperMotor_ON[i] = True
+            else:
+                stepperMotor_ON[i] = False
 # -----------------------------------------------------------------------------
 
 
@@ -133,20 +155,17 @@ def StepperMotorReconfig(ard, rpm, en, op):
 # Modify variables that are used to control the stepper motors
 # Arguments:    ard -> The 'ArduinoApi' object for communication
 def MotorControlling(ard):
-    global stirrTimer, RPM_60, StepsPerRev, sMotor_RPM
+    global stirrTimer, RPM_60, stepperMotor_RPM
 
     if checkConnection(ard):    # If arduino is connected,...
         try:
 
-            speed = (sMotor_RPM[0]/60) * RPM_60  # Speed for the specified RPMs
-            steps = StepsPerRev / 10  # specify steps to move
-            time = (steps/StepsPerRev) / (speed/RPM_60)  # time required to move the specified steps
-
-            sMotor[0].setSpeed(speed)  # Set motor speed
-            sMotor[0].step(steps)   # move the specified steps
+            for i in range(6):
+                if stepperMotor_ON[i] is True:
+                    stepperMotor[i].runSpeed()
 
             # re-call the function after the required time
-            stirrTimer = Timer(time, MotorControlling, [ard])
+            stirrTimer = Timer(0.005, MotorControlling, args=(ard,))
             stirrTimer.daemon = True
             stirrTimer.start()
             # --
