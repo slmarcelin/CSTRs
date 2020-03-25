@@ -124,7 +124,7 @@ def StirrOnOff():
             # update the time when the state changed to the current time
             Reactor.StateTime[i] = datetime.now()
 
-    print('reconf')
+
     # Update configuration control of stirring motors
     ard.StepperMotorReconfig(A, Reactor.RPM,
                              Reactor.StirrState,

@@ -2,32 +2,36 @@ import csv
 import os
 from datetime import datetime
 from pathlib import Path
+import time
 
-# VARIABLES
-SP = [0]    # store the SETPOINT
+# List to store values to read and write in CSV file
+SP = [0]
 TimeOn = [0]
 TimeOff = [0]
 RPM = [0]
 COM = [0]
 Enable = [0]
+Kp = [0]
+Ki = [0]
+Kd = [0]
 
 
-# --- Path of CSV files and folders -----------------------------------
+# --- Path of CSV files and folders -------------------------------------------
 # path of the main CSV folder where all Csv files are stored.
-CsvFolder = '{}/{}'.format(Path(__file__).parent.absolute(), "CSV")
+CsvFolder = '{}/{}'.format(Path(__file__).parent.absolute(), 'CSV')
 # path of the folder where the Csv files for every reactor is contained
-ReactorFolder = [""] * 6  # Location of the reactor folder
+ReactorFolder = [''] * 6  # Location of the reactor folder
 # path of the Setup file
-SetupFile = '{}/{} '.format(CsvFolder, "Setup.csv")
+SetupFile = '{}/{} '.format(CsvFolder, 'Setup.csv')
 
 # Name of the Csv file to register 'Reactor' temperatures for every reactor
-TempReactorName = [""] * 6
+TempReactorName = [''] * 6
 # Name of the Csv file to register 'Heater' temperatures for every reactor
-TempHeaterName = [""] * 6
+TempHeaterName = [''] * 6
 # Name of the Csv file to register the Stirring information for every reactor
-StirringInfoName = [""] * 6
+StirringInfoName = [''] * 6
 # Name of the CSV file to register the Feeding material for every reactor
-FeedingMaterialName = [""] * 6
+FeedingMaterialName = [''] * 6
 # ------------------------------------------------------------------------
 
 
@@ -35,13 +39,14 @@ FeedingMaterialName = [""] * 6
 # in the csv Setup file
 def setup_set(f='', SP=[35] * 6, TimeOn=[10] * 6, TimeOff=[5] * 6,
               RPM=[30] * 6, Kp=[1] * 6, Ki=[2] * 6, Kd=[3] * 6,
-                Enable=[1, 0, 0, 0, 0, 0], COM='--'):
+                Enable=[False]*6, COM='--'):
 
     data = [[''] * 6] * 15  # Data to be written in the file
 
     if os.path.exists(f):
         r = csv.reader(open(f))  # Read setup file
         data = list(r)
+        data = [e for e in data if e]  # filter empty elements
 
     # Modify values in the data array
     data[0] = SP
@@ -60,9 +65,10 @@ def setup_set(f='', SP=[35] * 6, TimeOn=[10] * 6, TimeOff=[5] * 6,
         writer.writerows(data)
 # -----------------------------------------------------------------------------
 
-
 # This function stores the name of the CSV files
 # in the setup csv file
+
+
 def setup_CSVnames(f, trn, thn, sin, fmn):
     r = csv.reader(open(f))  # Here your csv file
     data = list(r)
@@ -71,7 +77,7 @@ def setup_CSVnames(f, trn, thn, sin, fmn):
     data[10] = sin  # Stirring info CSV name
     data[11] = fmn  # Fedding material CSV name
 
-    with open(f, mode='w', newline='') as File:
+    with open(f, mode='w') as File:
         writer = csv.writer(File)
         writer.writerows(data)
 # -----------------------------------------------------------------------------
@@ -81,14 +87,13 @@ def setup_CSVnames(f, trn, thn, sin, fmn):
 # when application starts
 def setup_get(file=''):
 
-    with open(file) as File:
+    global SP, TimeOn, TimeOff, RPM, Kp, Ki, Kd, COM, Enable, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
 
-        global SP, TimeOn, TimeOff, RPM, Kp, Ki, Kd, COM, Enable, TempReactorName, TempHeaterName, StirringInfoName, FeedingMaterialName
-
-        data = []  # Data to be written in the file
-
-        reader = csv.reader(File, delimiter=',')
-        data = list(reader)
+    # read setup CSV file and get the values
+    with open(file) as csv_file:
+        csv_reader = csv.reader(csv_file)
+        data = list(csv_reader)
+        data = [e for e in data if e]  # filter empty elements
 
         # Asign value to global variables
         SP = list(map(int, data[0]))
@@ -121,23 +126,23 @@ def setup_get(file=''):
 # v4-> value written of sixth column
 def LOG(f, header='', v1='', v2='', v3='', v4=''):
 
-    file = open(f, "a")
+    file = open(f, 'a')
     # today's date with format
     date = datetime.now()
-    date = date.strftime("%Y-%m-%d %H:%M:%S")
+    date = date.strftime('%Y-%m-%d %H:%M:%S')
 
     if os.stat(f).st_size == 0:
         file.write(header)
 
     if v1 != '':
         file.write(str(date))
-        file.write("," + str(v1))
+        file.write(',' + str(v1))
     if v2 != '':
-        file.write("," + str(v2))
+        file.write(',' + str(v2))
     if v3 != '':
-        file.write("," + str(v3))
+        file.write(',' + str(v3))
     if v4 != '':
-        file.write("," + str(v4))
+        file.write(',' + str(v4))
 
     file.write('\n')
     file.flush()
@@ -149,15 +154,18 @@ def LOG(f, header='', v1='', v2='', v3='', v4=''):
 def CSV_file_create():
 
     date = datetime.now()
-    date = date.strftime("%Y-%m-%d")  # today's date
+    date = date.strftime('%Y-%m-%d')  # today's date
 
+
+    # Format the path for every Reactor inside the CSV
     for i in range(6):
         ReactorFolder[i] = '{}/Reactor_{}'.format(CsvFolder, i + 1)
 
+    #Create the main CSV folder when it does not exist---
     if not os.path.exists(CsvFolder):
         os.mkdir(CsvFolder)
 
-        # Create the folder for every reactor
+        # Create the sub-folder and files for every reactor if they do not exist
         for i in range(6):
             # Create reactor folder and 4 CSV files
             if not os.path.exists(ReactorFolder[i]):
@@ -183,6 +191,7 @@ def CSV_file_create():
                 LOG(f='{}/{}'.format(ReactorFolder[i], FeedingMaterialName[
                     i]), header='Date,Qty,Unit,Material')
 
+
         # Create Setup file
         setup_set(f=SetupFile)
         # Save the CSV names in setup file
@@ -191,6 +200,11 @@ def CSV_file_create():
 # -----------------------------------------------------------------------------
 
 
-CSV_file_create()
+CSV_file_create()  # Create the CSV folder with all the files inside
 # Get last configuration status
 setup_get(SetupFile)
+
+
+print(CsvFolder)
+print(ReactorFolder)
+print(TempReactorName)
