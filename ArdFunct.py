@@ -10,7 +10,7 @@ import math
 
 # ------ Arduino Pins & variables ------
 
-Heater_Pin_Out = [8, 7, 9, 10, 11, 12]  # Heater control(PWM outputs)
+Heater_Pin_Out = [8, 2, 9, 10, 11, 12]  # Heater control(PWM outputs)
 HeaterTemp_Pin_In = [1, 1, 1, 1, 1, 1]  # Heater temp. sensor(Analog inputs)
 ReactorTemp_Pin_In = [2, 2, 2, 2, 2, 2]  # Reactor temp. sensor(Analog inputs)
 
@@ -21,7 +21,7 @@ PUL_n_pin = [6, 34, 36, 27, 38, 39]  # PUL-
 PUL_p_pin = [7, 30, 32, 33, 34, 35]  # PUL+
 StepsPerRev = 200  # steps to do a rev
 stepperMotor = [0]*6  # List of the stepper motors
-stepperMotor_RPM = [1]*6  # motor RPMs(manipulated by GUI)
+stepperMotor_RPM = [30]*6  # motor RPMs(manipulated by GUI)
 stepperMotor_ON = [False]*6  # Enable of the motor(manipulated by program)
 #  ------------------------------------------
 
@@ -96,10 +96,11 @@ def ArdSetup(ard):
                                            pin2=DIR_p_pin[i],
                                            pin3=PUL_n_pin[i],
                                            pin4=PUL_p_pin[i],
+                                           enable=True,
                                            connection=ard.connection)
-            time.sleep(1)  # wait to crete stepper objects
-            stepperMotor[i].setMaxSpeed(800)
 
+            stepperMotor[i].setMaxSpeed(800.0)
+        time.sleep(1)  # wait to crete stepper objects
         # --------------------------------------------------
 
         # Function to control the stepper motors
