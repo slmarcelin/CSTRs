@@ -124,6 +124,7 @@ def StirrOnOff():
             # update the time when the state changed to the current time
             Reactor.StateTime[i] = datetime.now()
 
+    print('reconf')
     # Update configuration control of stirring motors
     ard.StepperMotorReconfig(A, Reactor.RPM,
                              Reactor.StirrState,
@@ -955,7 +956,7 @@ GUI_Rpm_Label = tk.Label(GUI_Stirring_Frame, text='RPM ',
                          font=font_small, anchor='e')
 GUI_Rpm_Label.place(relx=0.5, rely=0.3, relwidth=0.2, relheight=0.15)
 # RPM Spinbox
-GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(30, 60, 120),
+GUI_Rpm_Value = tk.Spinbox(GUI_Stirring_Frame, values=(60, 100, 200),
                            font=font_small, state='readonly', relief='solid',
                            command=_spinRPM)
 GUI_Rpm_Value.place(relx=0.7, rely=0.3, relwidth=0.2, relheight=0.15)
