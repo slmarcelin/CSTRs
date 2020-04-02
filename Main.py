@@ -140,7 +140,7 @@ def GuiOutputUpdate():
 
     # --- Left frame --------------------
     # date display
-    dateStr = datenow.strftime('%A %d. %B %Y\n %H:%M:%S')
+    dateStr = datenow.strftime('%A %d. %B %Y\n %H:%M')
     GUI_Clock.configure(text=dateStr)
 
     # Reactor buttons
@@ -214,7 +214,7 @@ def GuiOutputUpdate():
     # --------------------------------------
 
     # --- Loop this function on a timer threading ----
-    GuiUpdateOutputsTimer = Timer(1, GuiOutputUpdate)
+    GuiUpdateOutputsTimer = Timer(5, GuiOutputUpdate)
     GuiUpdateOutputsTimer.daemon = True
     GuiUpdateOutputsTimer.start()
 # --------------------------------------------------------------------
@@ -268,8 +268,8 @@ def UpdateStatus():
     # Get Heater temperatures
     Reactor.HeaterTemp = ard.ReadHeaterTemp(A, Reactor.Enable)
 
-    # -- Thermal protection control -----------------------------------------------
-    # if the temperature of a heater is not increasing when the power is abobe 10%
+    # -- Thermal protection control --------------------------------------------
+    # if the temperature of a heater is not increasing when the power is above 10%
     # then the thermal protection is going to turn on and the reactor is going to
     # be desabled (when a reactor is desabled, the heater and motor are off)
     for i in range(6):
@@ -578,7 +578,6 @@ def PidTunningButton():
     top = tk.Toplevel()
     top.title('Reactor{} PID controler'.format(selReact + 1))
     top.resizable(False, False)
-
     # PIDTunning parameter label
     PIDlabel = tk.Label(top, text='TUNNING PARAMETERS',
                         bg=RGB_LeftBar_DarkBlue, fg='white',
@@ -630,6 +629,14 @@ def PidTunningButton():
                                 font=font_small, width=40, command=enter_btn)
     PID_EnterButton.grid(row=4, column=0, columnspan=2)
 
+    x = GUI_Main_Window.winfo_width()//5
+    y = GUI_Main_Window.winfo_height()//5
+
+    topwidth = top.winfo_width()
+
+    print(topwidth, GUI_Main_Window.winfo_width())
+
+    top.geometry('+{}+{}'.format(x, y))
     top.mainloop()
 # ------------------------------------------------
 
@@ -785,7 +792,7 @@ sw = GUI_Main_Window.winfo_width()  # width of the screen
 sh = GUI_Main_Window.winfo_height()  # height of the screen
 
 # Main window resize according to zoom value
-z = 0.9  # Main window zoom(1 is full screen)
+z = 1  # Main window zoom(1 is full screen)
 w = int(sw * z)  # width for the Tk root
 h = int(sh * z)  # height for the Tk root
 zl = 1.5 * z  # Font zoom
