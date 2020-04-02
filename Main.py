@@ -319,7 +319,7 @@ def DataLogger():
 
         for i in range(6):
             if Reactor.Enable[i] is True and Reactor.CurrentTemp[i] != 0 and Reactor.HeaterTemp[i] != 0:
-                print('--> Logs of Reactor{} saved'.format(i + 1))
+                print('--> Reactor{} logging'.format(i + 1))
 
                 # ------ Logging Reactor Temperature -------------------------
                 path = '{}/Reactor_{}/{}'.format(CSV.CsvFolder, i + 1,
@@ -1068,6 +1068,7 @@ GUI_SerialPortLabel.place(relx=0, rely=0, relwidth=0.3, relheight=1)
 GUI_SerialPortValue = ttk.Combobox(GUI_SerialPortLabel, values=serial_ports,
                                    font=font_small)
 GUI_SerialPortValue.bind("<<ComboboxSelected>>", SerialPortChange)  # on select, call function)
+GUI_SerialPortValue.option_add("*TCombobox*Listbox*Font", font_medium)  # Add font to the combo-box
 GUI_SerialPortValue.place(relx=0.15, rely=0, relwidth=0.4, relheight=1)
 
 #  Connection state

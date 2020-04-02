@@ -243,6 +243,3 @@ CSV_file_create()  # Create the CSV folder with all the files inside
 Memory_get(MemoryFile)  # Get configuration status
 
 #
-p = '{}/{}'.format(ReactorFolder[0], TempReactorName[0])
-print(p)
-LOG(f=p, header='Date,RPM,ON,OFF', v1=50)
