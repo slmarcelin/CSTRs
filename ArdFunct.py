@@ -1,38 +1,36 @@
-#
-# This test includes the AccelStepper library from arduino to manipulate multuple
-# steppers at same time
 
+# Site Packages -----
 from nanpy import ArduinoApi, SerialManager, AccelStepper   # https://pypi.org/project/nanpy/
 from threading import Timer  # https://docs.python.org/3/library/threading.html
+
+# Inbuilt packages ------
 import time
 import math
 
 
+# ------------------------------------------------------------------------
+# NOTE: Arduino Pins & variables must be defined here
 # ------ Arduino Pins & variables ------
-
 Heater_Pin_Out = [8, 2, 9, 10, 11, 12]  # Heater control(PWM outputs)
 HeaterTemp_Pin_In = [1, 1, 1, 1, 1, 1]  # Heater temp. sensor(Analog inputs)
 ReactorTemp_Pin_In = [2, 2, 2, 2, 2, 2]  # Reactor temp. sensor(Analog inputs)
-
-# -- Stepper motor pins
+# - Stepper motor pins
 DIR_n_pin = [4, 22, 24, 25, 26, 27]  # DIR-
 DIR_p_pin = [5, 28, 30, 31, 32, 33]  # DIR+
 PUL_n_pin = [6, 34, 36, 27, 38, 39]  # PUL-
 PUL_p_pin = [7, 30, 32, 33, 34, 35]  # PUL+
-StepsPerRev = 200  # steps to do a rev
+StepsPerRev = 200  # steps required for a revolution
+# ------------------------------------------------------------------------------
+
+
+# --- global variables ------------------------------------
 stepperMotor = [0]*6  # List of the stepper motors
 stepperMotor_RPM = [30]*6  # motor RPMs(manipulated by GUI)
 stepperMotor_ON = [False]*6  # Enable of the motor(manipulated by program)
-#  ------------------------------------------
-
+#
 stirrTimer = 0  # Timer to call MotorControlling()
-# ---- Speed CONSTANTS
-
-# ----------------
-led = 13  # LED in arduino(Used to validate connection)
-noReactors = 6  # Number of reactors Used
 run = False  # Flag to indicate that arduino is performing properly
-# -----------------------------------------------------------------------------
+# --------------------------------------------------------
 
 
 # --- Arduino connection function ---------------------------------------------
@@ -290,7 +288,7 @@ def ReadReactorTemp(ard, Enabled):
             for i in range(6):
 
                 if Enabled[i]:  # If the reactor is enabled,
-                        # Get average of temperature readings
+                    # Get average of temperature readings
                     numSamples = 50  # number of samples to calculate average
                     analogRead = 0  # Local variable to calculate analog reading
                     sumRead = 0  # Local variable to sum all analog readings
