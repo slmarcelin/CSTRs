@@ -741,9 +741,9 @@ def UpdatePlot(days, ax):
         GraphTitle = 'Not enough data to graph the ' + GraphTitle + ' for Reactor ' + \
             str(selReact + 1) + '\nTry again later or pick another option'
 
-    ax.set_title(GraphTitle, size=12 * zl)  # set the graph title
-    ax.set_xlabel(xlabel, size=12 * zl)  # set the x axis label
-    ax.set_ylabel('°C Degrees', size=12 * zl)  # set the y axis label
+    ax.set_title(GraphTitle, size=12 * fz)  # set the graph title
+    ax.set_xlabel(xlabel, size=12 * fz)  # set the x axis label
+    ax.set_ylabel('°C Degrees', size=12 * fz)  # set the y axis label
 
     graph.draw()
 
@@ -768,13 +768,10 @@ A = []  # variable used to store communication object
 RGB_LeftBar_DarkBlue = '#{:02X}{:02X}{:02X}'.format(0, 0, 140)
 RGB_LeftBar_MidBlue = '#{:02X}{:02X}{:02X}'.format(82, 136, 174)
 RGB_LeftBar_LightBlue = '#{:02X}{:02X}{:02X}'.format(199, 214, 221)
-
 RGB_Temperature_title = 'dodgerBlue4'
 RGB_Stirring_title = 'springgreen4'
 RGB_Feeding_title = 'gold'
-#
 RGB_Sections_bg = 'gray92'
-#
 RGB_Graph_b1 = 'gray79'
 
 
@@ -783,40 +780,25 @@ GUI_Main_Window = tk.Tk()
 GUI_Main_Window.title('CSRT Reactors control')
 
 # get screen width and height
-# if os.name == 'nt':  # windows os
-#     GUI_Main_Window.state(newstate='zoomed')  # maximize main window(windows)
-# elif os.name == 'posix':  # linux os
-#     GUI_Main_Window.attributes('-zoomed', True)  # maximize main window(linux)
-# absGUI_Main_Window.update()  # update size values
-sw = GUI_Main_Window.winfo_width()  # width of the screen
-sh = GUI_Main_Window.winfo_height()  # height of the screen
+sw = GUI_Main_Window.winfo_screenwidth()  # width of the screen
+sh = GUI_Main_Window.winfo_screenheight()  # height of the screen
 
-# Main window resize according to zoom value
-z = 1  # Main window zoom(1 is full screen)
-w = int(sw * z)  # width for the Tk root
-h = int(sh * z)  # height for the Tk root
-zl = 1.5 * z  # Font zoom
-
-# get x and y Main window position values
-# x = GUI_Main_Window.winfo_x()
-# y = GUI_Main_Window.winfo_y()
-
-# Configurate size and position of Main window
+# Configurate size of Main window
+GUI_Main_Window.minsize(width=int(sw*0.85), height=int(sh*0.85))  # minimum size
 if os.name == 'nt':  # windows os
-    GUI_Main_Window.state(newstate='zoomed')  # normalize main window(windows)
+    GUI_Main_Window.state('zoomed')  # normalize main window(windows)
 elif os.name == 'posix':  # linux os
-    GUI_Main_Window.attributes('-fullscreen', False)  # normalize main window(linux)
-# GUI_Main_Window.geometry('{}x{}+{}+{}' .format(w, h, x, y))
-GUI_Main_Window.resizable(False, False)
+    GUI_Main_Window.attributes('-zoomed', True)  # normalize main window(linux)
 
 
 # Font config
+fz = 1.5  # Font zoom
 font_name = 'calibri'
-font_small = (font_name, int(10 * zl))
-font_small_bold = (font_name, int(11 * zl), 'bold')
-font_medium = (font_name, int(12 * zl))
-font_medium_bold = (font_name, int(12 * zl), 'bold')
-font_big = (font_name, int(32 * zl))
+font_small = (font_name, int(10 * fz))
+font_small_bold = (font_name, int(11 * fz), 'bold')
+font_medium = (font_name, int(12 * fz))
+font_medium_bold = (font_name, int(12 * fz), 'bold')
+font_big = (font_name, int(32 * fz))
 
 
 # ----- Left section of GUI  -------------------------------
@@ -1038,7 +1020,7 @@ GUI_Graph_Frame = tk.Frame(GUI_Display_Area,
 GUI_Graph_Frame.place(relx=0.0, rely=0.45,
                       relwidth=1, relheight=0.5)
 # Plot Area
-fig = plt.Figure(figsize=(3, 4), dpi=80 * z)  # figure to hold plot
+fig = plt.Figure(figsize=(3, 4), dpi=80)  # figure to hold plot
 ax = fig.add_subplot(111)
 graph = FigureCanvasTkAgg(fig, master=GUI_Graph_Frame)
 graph.get_tk_widget().place(relx=0, rely=0.05,
