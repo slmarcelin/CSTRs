@@ -783,11 +783,11 @@ GUI_Main_Window = tk.Tk()
 GUI_Main_Window.title('CSRT Reactors control')
 
 # get screen width and height
-if os.name == 'nt':  # windows os
-    GUI_Main_Window.state(newstate='zoomed')  # maximize main window(windows)
-elif os.name == 'posix':  # linux os
-    GUI_Main_Window.attributes('-zoomed', True)  # maximize main window(linux)
-GUI_Main_Window.update()  # update size values
+# if os.name == 'nt':  # windows os
+#     GUI_Main_Window.state(newstate='zoomed')  # maximize main window(windows)
+# elif os.name == 'posix':  # linux os
+#     GUI_Main_Window.attributes('-zoomed', True)  # maximize main window(linux)
+# absGUI_Main_Window.update()  # update size values
 sw = GUI_Main_Window.winfo_width()  # width of the screen
 sh = GUI_Main_Window.winfo_height()  # height of the screen
 
@@ -798,15 +798,15 @@ h = int(sh * z)  # height for the Tk root
 zl = 1.5 * z  # Font zoom
 
 # get x and y Main window position values
-x = GUI_Main_Window.winfo_x()
-y = GUI_Main_Window.winfo_y()
+# x = GUI_Main_Window.winfo_x()
+# y = GUI_Main_Window.winfo_y()
 
 # Configurate size and position of Main window
 if os.name == 'nt':  # windows os
-    GUI_Main_Window.state(newstate='normal')  # normalize main window(windows)
+    GUI_Main_Window.state(newstate='zoomed')  # normalize main window(windows)
 elif os.name == 'posix':  # linux os
-    GUI_Main_Window.attributes('-zoomed', False)  # normalize main window(linux)
-GUI_Main_Window.geometry('{}x{}+{}+{}' .format(w, h, x, y))
+    GUI_Main_Window.attributes('-fullscreen', False)  # normalize main window(linux)
+# GUI_Main_Window.geometry('{}x{}+{}+{}' .format(w, h, x, y))
 GUI_Main_Window.resizable(False, False)
 
 
