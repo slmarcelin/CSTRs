@@ -39,13 +39,12 @@ run = False  # Flag to indicate that arduino is performing properly
 # * IF the communication could be done, returns an 'ArduinoApi' object
 # else, returns a 'False' value
 def ArdConnect(com):
-    global run
-
+    global run, connection
     try:
         # Establish serial communication with Arduino
-        connection = SerialManager(device=com)
-        ard = ArduinoApi(connection=connection)
+        ard = ArduinoApi(SerialManager(device=com))
         #
+
         print('--> Arduino connected in port ' + com)
         run = True  # indicate that arduino connection is done
         return ard  # return an 'ArduinoApi' object

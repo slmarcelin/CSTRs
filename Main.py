@@ -491,7 +491,7 @@ def StirrRpmChange():
 def SerialPortChange(event):
     global com, A
 
-    com = GUI_SerialPortValue.get()
+    com = GUI_SerialPortValue.get()  # Update selected port
 
     print('--> Selected port changed to:', com)
     return True
