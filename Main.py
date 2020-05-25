@@ -6,7 +6,6 @@ from simple_pid import PID  # https://pypi.org/project/simple-pid/
 import matplotlib.pyplot as plt  # https://pypi.org/project/matplotlib/
 import matplotlib.dates as mdates
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import Image, ImageTk  # https://pypi.org/project/Pillow/
 
 # Inbuilt packages ------
 import tkinter as tk
@@ -17,7 +16,6 @@ import os
 from functools import partial
 from threading import Timer
 from datetime import datetime, timedelta
-import time
 
 # Project files ---------
 import ArdFunct as ard
@@ -259,7 +257,9 @@ def GUI_EntriesUpdate():
 #   try to start a connection with the selected serial communication port
 # - This function is going to be called every 5 seconds
 def UpdateStatus():
-    global A,        UpdateStatusTimer
+    global A, UpdateStatusTimer
+
+    heaterEnable = [False]*6  # limit heater max.temperature to 90°C
 
     # Get Reactor temperatures(Current temperature)
     Reactor.CurrentTemp = ard.ReadReactorTemp(A, Reactor.Enable)
@@ -286,12 +286,16 @@ def UpdateStatus():
             Reactor.Enable[i] = False  # reactor is disabled
             GuiOutputUpdate()
             msg = 'The heater temperature of Reactor {} is not changing. \
-                 ,\n The reactor is now disabled.'.format(i+1)
-            tk.messagebox.showwarning('Thermal protection', msg)
+                 \n The reactor is now disabled.'.format(i+1)
+            tk.messagebox.showwarning('Thermal run-away protection', msg)
             print(msg)
     # --------------------------------------------------------------------------
 
-    # Control heatres
+    # -- Control heater devices
+        # Limit maximum temperature of heater to 90°c
+        if Reactor.Enable[i] and Reactor.HeaterTemp[i] < 90:
+            heaterEnable[i] = True
+        #
     ard.ControlHeaters(A, Reactor.OP, Reactor.Enable)
 
     # Attempt to connect arduino(when connection is not established)
