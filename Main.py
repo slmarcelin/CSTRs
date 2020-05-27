@@ -1,6 +1,6 @@
 # !/usr/bin/python3
 
-# ==== Required Packages =================================================
+# ============ Import libraries ==========================
 # Site Packages -----
 from simple_pid import PID  # https://pypi.org/project/simple-pid/
 import matplotlib.pyplot as plt  # https://pypi.org/project/matplotlib/
@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import ArdFunct as ard
 import CsvFunct as CSV
 import PandaFunct as Panda
-# ==== Required Packages (END) ===============================================
+# ============ Import libraries(END) ==========================
 
 
 # --- Definition of _Reactor class and object creation -------------------
@@ -66,8 +66,8 @@ for i in range(6):
 # -----------------------------------------------------------------------------
 
 
-# ==== Application functions =================================================
-#
+# ============ Backend functions =========================================
+
 # --- Stirring control by timmer ---------------------------------------------
 # In this function, the stirring state is going to be managed...
 # - A stirring state(On/Off) is going to change untill the curent time is equal
@@ -123,7 +123,7 @@ def StirrOnOff():
 
     # --- Loop this function on a timer threading ----
     StirrOnOffTimer = Timer(1, StirrOnOff)
-    StirrOnOffTimer.daemon = True
+    StirrOnOffTimer.daemon = True  # will allow the main program to exit when closing the app
     StirrOnOffTimer.start()
 # ----------------------------------------------------------------------------
 
@@ -131,7 +131,7 @@ def StirrOnOff():
 # Update apparence and values of Labels, Texts and Buttons from GUI --
 def GuiOutputUpdate():
 
-    global GuiUpdateOutputsTimer  # Timmer used to loop this function
+    global GuiOutputUpdateTimer  # Timmer used to loop this function
 
     r = selReact  # Current selected reactor(to be used as index)
     datenow = datetime.now()  # Current time
@@ -212,9 +212,9 @@ def GuiOutputUpdate():
     # --------------------------------------
 
     # --- Loop this function on a timer threading ----
-    GuiUpdateOutputsTimer = Timer(5, GuiOutputUpdate)
-    GuiUpdateOutputsTimer.daemon = True
-    GuiUpdateOutputsTimer.start()
+    GuiOutputUpdateTimer = Timer(5, GuiOutputUpdate)
+    GuiOutputUpdateTimer.daemon = True  # will allow the main program to exit when closing the app
+    GuiOutputUpdateTimer.start()
 # --------------------------------------------------------------------
 
 
@@ -309,7 +309,7 @@ def UpdateStatus():
 
     # Timed repeated function
     UpdateStatusTimer = Timer(5, UpdateStatus)
-    UpdateStatusTimer.daemon = True
+    UpdateStatusTimer.daemon = True  # will allow the main program to exit when closing the app
     UpdateStatusTimer.start()
 # ------------------------------------------------------------------
 
@@ -413,7 +413,7 @@ def DataLogger():
                 # -----------------------------------------------------------
 
     MinuteLoopTimer = Timer(30*60, DataLogger)  # Save data every 30 mins
-    MinuteLoopTimer.daemon = True
+    MinuteLoopTimer.daemon = True  # will allow the main program to exit when closing the app
     MinuteLoopTimer.start()  # Restart Timer
 # ------------------------------------------------------------
 
@@ -448,12 +448,11 @@ def PIDfunct():
             op[i] = Reactor.pid[i](Reactor.CurrentTemp[i])  # compute a new output value
     return op
 # ------------------------------------------------------------
-#
-# ==== Application functions (END) ============================================
+# ============ Application functions (END) ====================================
 
 
-# ==== Function commands used in GUI Objects ==================================
-#
+# ============ Frontend Functions =============================================
+
 # Change of a resired temperature value
 def SetPointChange(value=0):
     print(value)
@@ -753,22 +752,22 @@ def UpdatePlot(days, ax):
 
     print('PLOT UPDATED')
 # ---------------------------------------------
-#
-# ==== Function commands used in GUI Objects (END) ============================
+# ============ Frontend Functions(END) ========================================
 
 
-# ==== GUI SECTION ============================================================
+# ============ Creation of the GUI=============================================
 
 selReact = 0  # Current selected reactor to be displayed
 selRange = 1  # Selected range to be ploted
 
-# ---- Arduino Serial communication port --------------------
+
+# ---- Arduino Serial communication ports --------------------
 serial_ports = []  # List of communication ports
 com = CSV.COM  # Initialize communication port to the last saved value
 A = []  # variable used to store communication object
+# ----
 
-
-# Color formats
+# ---- Color formats ---------
 RGB_LeftBar_DarkBlue = '#{:02X}{:02X}{:02X}'.format(0, 0, 140)
 RGB_LeftBar_MidBlue = '#{:02X}{:02X}{:02X}'.format(82, 136, 174)
 RGB_LeftBar_LightBlue = '#{:02X}{:02X}{:02X}'.format(199, 214, 221)
@@ -777,11 +776,23 @@ RGB_Stirring_title = 'springgreen4'
 RGB_Feeding_title = 'gold'
 RGB_Sections_bg = 'gray92'
 RGB_Graph_b1 = 'gray79'
+# ----------------------------
 
 
-# Main Window
+# ---- Font config --------------------
+fz = 1.5  # Font zoom
+font_name = 'calibri'
+font_small = (font_name, int(10 * fz))
+font_small_bold = (font_name, int(11 * fz), 'bold')
+font_medium = (font_name, int(12 * fz))
+font_medium_bold = (font_name, int(12 * fz), 'bold')
+font_big = (font_name, int(32 * fz))
+# ----------------------------------------
+
+
+# ---- Main Window ------------------
 GUI_Main_Window = tk.Tk()
-GUI_Main_Window.title('CSRT Reactors control')
+GUI_Main_Window.title('CSRTS Reactor control')
 
 # get screen width and height
 sw = GUI_Main_Window.winfo_screenwidth()  # width of the screen
@@ -793,19 +804,10 @@ if os.name == 'nt':  # windows os
     GUI_Main_Window.state('zoomed')  # normalize main window(windows)
 elif os.name == 'posix':  # linux os
     GUI_Main_Window.attributes('-zoomed', True)  # normalize main window(linux)
+# --------------------------------------
 
 
-# Font config
-fz = 1.5  # Font zoom
-font_name = 'calibri'
-font_small = (font_name, int(10 * fz))
-font_small_bold = (font_name, int(11 * fz), 'bold')
-font_medium = (font_name, int(12 * fz))
-font_medium_bold = (font_name, int(12 * fz), 'bold')
-font_big = (font_name, int(32 * fz))
-
-
-# ----- Left section of GUI  -------------------------------
+# ---- Left section of GUI  --------------------------------
 GUI_Selection_Area = tk.Canvas(GUI_Main_Window,
                                bg=RGB_LeftBar_DarkBlue, highlightthickness=0)
 GUI_Selection_Area.place(relx=0, rely=0, relwidth=0.2, relheight=1)
@@ -831,9 +833,10 @@ for i in range(6):
 GUI_Display_Area = tk.Frame(GUI_Main_Window, bg='white', bd=2)
 GUI_Display_Area.place(relx=0.2, rely=0,
                        relwidth=0.8, relheight=1)
-#
+# --------------------------------------------------------------
 
-# ------- Reactor frame --------------
+
+# ------- Reactor frame ----------------------------------------
 GUI_Reactor_Frame = tk.Frame(GUI_Display_Area,
                              bg='black', bd=1, padx=2, pady=2,
                              relief='solid')
@@ -853,8 +856,10 @@ GUI_Enable_Button = tk.Button(GUI_Reactor_Frame, text='EN/DIS',
                               font=font_medium, command=EnableReactChange)
 GUI_Enable_Button.place(relx=0.8, rely=0.0,
                         relwidth=0.2, relheight=0.12)
+# ----------------------------------------------------------------
 
-# ------- TEMPERATURE FRAME -----------------------------
+
+# ------- Temperature frame -----------------------------
 # Frame
 GUI_Temperature_Frame = tk.Frame(GUI_Reactor_Frame,
                                  bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
@@ -905,8 +910,10 @@ GUI_Pid_Button = tk.Button(GUI_Temperature_Frame, text='PID',
                            bg=RGB_Graph_b1,
                            font=font_small, command=PidTunningButton)
 GUI_Pid_Button.place(relx=0.01, rely=1 - 0.15, relwidth=0.2, relheight=0.14)
+# ----------------------------------------------------------------
 
-# ------- STIRRING FRAME -----------------------------
+
+# ------- Stirring frame -----------------------------
 # Frame
 GUI_Stirring_Frame = tk.Frame(GUI_Reactor_Frame,
                               bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
@@ -963,9 +970,10 @@ GUI_StirrTime_Label = tk.Label(GUI_Stirring_Frame, text='Time: 00.00.00',
                                bg=RGB_Sections_bg,
                                font=font_small, anchor='nw')
 GUI_StirrTime_Label.place(relx=0.6, rely=0.9, relwidth=0.4, relheight=0.1)
-#
+# --------------------------------------------------------------------
 
-# ------- Feeding Material FRAME -----------------------------
+
+# ---- Feeding Material frame -------------------------------------
 # Frame
 GUI_FeedMat_Frame = tk.Frame(GUI_Reactor_Frame,
                              bg=RGB_Sections_bg, bd=2, padx=5, pady=5,
@@ -1013,10 +1021,10 @@ GUI_Feed_button = tk.Button(GUI_FeedMat_Frame, text='Enter',
                             font=font_small, command=FeedMaterialEnter)
 GUI_Feed_button.place(relx=0.1, rely=0.55,
                       relwidth=1 - 0.2, relheight=0.14)
-#
+# ------------------------------------------------------------
 
 
-# ------ Graphs Frame -----------------------------------------
+# ---- Graphical data viualization frame --------------------------
 # Frame
 GUI_Graph_Frame = tk.Frame(GUI_Display_Area,
                            bg='white', bd=1, padx=0, pady=0,
@@ -1054,16 +1062,16 @@ GUI_UpdateButton = tk.Button(GUI_Graph_Frame, text='Update plot',
                              command=partial(UpdatePlot, days=0, ax=ax))
 GUI_UpdateButton.place(relx=1 - 0.15, rely=5 * (1 / 6),
                        relwidth=0.15, relheight=(1 / 6))
-#
+# ----------------------------------------------------------------
 
-# ------ Status Bar ---------------------------------------------------
+
+# ---- Status Bar ---------------------------------------------------
 GUI_Status_Bar = tk.Frame(GUI_Main_Window,
                           bg='GRAY86', bd=1, padx=0, pady=0,
                           relief='solid')
 GUI_Status_Bar.place(relx=0, rely=1 - 0.04,
                      relwidth=1, relheight=0.04)
 # Serial port
-
 GUI_SerialPortLabel = tk.Label(GUI_Status_Bar, text='PORT ',
                                bg='GRAY72', bd=1, padx=0, pady=0,
                                font=font_small, anchor='w', relief='groove')
@@ -1094,10 +1102,10 @@ for i in range(6):
     GUI_ErrorInfo[i].place(relx=(3 / 15) + (i * 2 / 15),
                            rely=0, relwidth=(2 / 15), relheight=1)
 # -----------------------------------------------------------------------
-# ==== GUI SECTION (END)=======================================================
+# ============ Creation of the GUI(END) =============================================
 
 
-# ---- Object and Timer initialization ----------
+# ---- Object and loop functions initialization ----------
 UpdatePlot(selRange, ax)
 StirrOnOff()
 UpdateStatus()
@@ -1108,12 +1116,14 @@ GUI_Main_Window.mainloop()
 # ------------------------------------------------
 
 
-# ---- Code to finish the apllication ----------------
-
-# TURN HEATERS OFF
+# ---- Code to finish the apllication --------------------
+# =========== PENDING CODE =================
+#      TURN ALL HEATERS OFF
+#      TURN ALL HEATERS OFF
+#      TURN ALL HEATERS OFF
+# =========== PENDING CODE =================
 op = [0]*6  # 0% heater power
 ard.ControlHeaters(A, op, Reactor.Enable)
-#
 
 # Set changes in Memory csv file
 CSV.Memory_set(f=CSV.MemoryFile,

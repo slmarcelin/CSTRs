@@ -1,5 +1,9 @@
+# ============ Import libraries ==========================
 import pandas as pd
+# ============ Import libraries(End) =====================
 
+
+# ============ Functions ====================================
 
 # --- Function to obtain the dataframe of a file -------------
 # ARGUMENTS:
@@ -27,3 +31,4 @@ def FileDataFrame(path, rate, TimeRange, now):
     DF = DF.dropna()
 
     return DF
+# ============ Functions(END) ================================

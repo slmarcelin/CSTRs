@@ -1,22 +1,25 @@
+# ============ Import libraries =====================
 import csv
 import os
 from datetime import datetime
 from pathlib import Path
+# ============ Import libraries(END) ================
 
 
-# List to store values to read and write in CSV file
-DesiredTemp = [0]
-TimeOn = [0]
-TimeOff = [0]
-RPM = [0]
-COM = [0]
-Enable = [0]
-Kp = [0]
-Ki = [0]
-Kd = [0]
+# ============ Definition of global variables ==============================
+
+DesiredTemp = [0]  # Desired temperature list
+TimeOn = [0]  # Duration of stirring in "On" state list
+TimeOff = [0]  # Duration of stirring in "Off" state list
+RPM = [0]  # Stepper motor Revolutions per minute List
+COM = [0]  # Selected serial port
+Enable = [0]  # Reactor Enable/Disable status List
+Kp = [0]  # PID's Proportional parameter List
+Ki = [0]  # PID's Integral parameter List
+Kd = [0]  # PID's derivative parameter List
 
 
-# --- Path of CSV files and folders -------------------------------------------
+# --- Path of CSV files and folders -------------------
 #
 # path of the main CSV folder where all Csv files are stored.
 CsvFolder = '{}/{}'.format(Path(__file__).parent.absolute(), 'CSV')
@@ -24,7 +27,7 @@ CsvFolder = '{}/{}'.format(Path(__file__).parent.absolute(), 'CSV')
 MemoryFile = '{}/{} '.format(CsvFolder, 'Memory.csv')
 # path of the folder where the Csv files for every reactor is contained
 ReactorFolder = [''] * 6  # Location of the reactor folder
-#
+
 # Name of the Csv file to register 'Reactor' temperatures for every reactor
 TempReactorName = [''] * 6
 # Name of the Csv file to register 'Heater' temperatures for every reactor
@@ -33,8 +36,11 @@ TempHeaterName = [''] * 6
 StirringInfoName = [''] * 6
 # Name of the CSV file to register the Feeding material for every reactor
 FeedingMaterialName = [''] * 6
-# ------------------------------------------------------------------------
+# -----------------------------------------------------------
+# ============ Definition of global variables(END) =========================
 
+
+# ============ FUNCTIONS ====================================================
 
 # Store the GUI configuration
 #  When the programm is executed for the first time, a memory csv file will be
@@ -237,9 +243,10 @@ def CSV_file_create():
                     trn=TempReactorName, thn=TempHeaterName,
                     sin=StirringInfoName, fmn=FeedingMaterialName)
 # ----------------------------------------------------
+# ============ FUNCTIONS(END) =================================================
 
 
+# ============ Functions execution =============================================
 CSV_file_create()  # Create the CSV folder with all the files inside
 Memory_get(MemoryFile)  # Get configuration status
-
 #

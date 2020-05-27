@@ -1,16 +1,19 @@
 
-# Site Packages -----
+# ============ Import libraries =====================
+# Site Packages -
 from nanpy import ArduinoApi, SerialManager, AccelStepper   # https://pypi.org/project/nanpy/
 from threading import Timer  # https://docs.python.org/3/library/threading.html
-
 # Inbuilt packages ------
 import time
 import math
+# ============ Import libraries(END) ================
 
 
-# ------------------------------------------------------------------------
-# NOTE: Arduino Pins & variables must be defined here
+# ============ Definition of global variables ================================
+
 # ------ Arduino Pins & variables ------
+# NOTE: Arduino Pins & variables must be defined here
+#
 Heater_Pin_Out = [8, 2, 9, 10, 11, 12]  # Heater control(PWM outputs)
 HeaterTemp_Pin_In = [1, 1, 1, 1, 1, 1]  # Heater temp. sensor(Analog inputs)
 ReactorTemp_Pin_In = [2, 2, 2, 2, 2, 2]  # Reactor temp. sensor(Analog inputs)
@@ -20,18 +23,20 @@ DIR_p_pin = [5, 28, 30, 31, 32, 33]  # DIR+
 PUL_n_pin = [6, 34, 36, 27, 38, 39]  # PUL-
 PUL_p_pin = [7, 30, 32, 33, 34, 35]  # PUL+
 StepsPerRev = 200  # steps required for a revolution
-# ------------------------------------------------------------------------------
+# ----------------------------------------
 
-
-# --- global variables ------------------------------------
+# ------ Programm variables ------------------------
 stepperMotor = [0]*6  # List of the stepper motors
 stepperMotor_RPM = [30]*6  # motor RPMs(manipulated by GUI)
 stepperMotor_ON = [False]*6  # Enable of the motor(manipulated by program)
 #
 stirrTimer = 0  # Timer to call MotorControlling()
 run = False  # Flag to indicate that arduino is performing properly
-# --------------------------------------------------------
+# --------------------------------------------------
+# ============ Definition of global variables(END) ============================
 
+
+# ============ Functions ======================================================
 
 # --- Arduino connection function ---------------------------------------------
 # This function attemprs to establish arduino communication.
@@ -315,5 +320,5 @@ def ReadReactorTemp(ard, Enabled):
 
     else:
         return [0]*6  # return a list with 0s when arduino is not connected
-
 # -----------------------------------------------------------------------------
+# ============ Functions(END) ======================================================
